@@ -1,0 +1,29 @@
+package com.relaxmind.app.data.model
+
+data class Patient(
+    val id: String = "",
+    val role: String = "patient",
+    val name: String = "",
+    val lastName: String = "",
+    val email: String = "",
+    val emailVerified: Boolean = false,
+    val phone: String = "",
+    val birthDate: String = "",
+    val sex: String = "",
+    val condition: String = "",
+    val avatarUrl: String = "",
+    val fcmToken: String = "",
+    val caregiverId: String? = null,
+    val linkedCaregiverAt: String? = null,
+    val darkMode: Boolean = false,
+    val language: String = "es",
+    val biometricEnabled: Boolean = false,
+    val keepSessionActive: Boolean = false,
+    val notificationsEnabled: Boolean = true,
+    val checkInReminderEnabled: Boolean = true,
+    val onboardingCompleted: Boolean = false,
+    val isDeleted: Boolean = false,
+    val deletedAt: String? = null,
+    val deletionReason: String? = null,
+    val createdAt: String = ""
+)
