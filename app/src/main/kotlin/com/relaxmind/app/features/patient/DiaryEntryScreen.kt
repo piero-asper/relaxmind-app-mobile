@@ -68,7 +68,8 @@ private data class EmotionOption(val emoji: String, val label: String)
 @Composable
 fun DiaryEntryScreen(
     viewModel: PatientViewModel = viewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onSaved: () -> Unit = onNavigateBack
 ) {
     val context = LocalContext.current
     val isLoading by viewModel.isLoading.collectAsState()
@@ -101,6 +102,7 @@ fun DiaryEntryScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             RelaxTopBar(
                 title = "Nueva entrada",
@@ -362,7 +364,7 @@ fun DiaryEntryScreen(
                             context = context,
                             onSuccess = {
                                 viewModel.clearError()
-                                onNavigateBack()
+                                onSaved()
                             }
                         )
                     },

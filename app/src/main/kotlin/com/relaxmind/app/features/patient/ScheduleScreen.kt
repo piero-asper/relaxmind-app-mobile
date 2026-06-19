@@ -106,6 +106,7 @@ fun ScheduleScreen(
     val tabs = listOf("Semana", "Mes")
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             RelaxTopBar(title = "Agenda")
         },

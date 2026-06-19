@@ -302,6 +302,15 @@ class FirestoreRepository(
             .toObjectList(DiaryEntry::class.java)
     }
 
+    suspend fun getDiaryEntries(patientId: String): Result<List<DiaryEntry>> = runCatching {
+        firestore.collection(DIARY_ENTRIES_COLLECTION)
+            .whereEqualTo("patientId", patientId)
+            .get()
+            .await()
+            .toObjectList(DiaryEntry::class.java)
+            .sortedByDescending { it.date }
+    }
+
     suspend fun getDiaryEntriesCount(patientId: String): Result<Int> = runCatching {
         firestore.collection(DIARY_ENTRIES_COLLECTION)
             .whereEqualTo("patientId", patientId)

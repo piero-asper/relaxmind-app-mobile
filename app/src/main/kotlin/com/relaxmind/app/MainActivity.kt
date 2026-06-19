@@ -38,7 +38,10 @@ class MainActivity : ComponentActivity() {
             val darkMode by ThemeState.darkMode.collectAsState()
 
             RelaxMindTheme(darkTheme = darkMode) {
-                Surface {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
                     val currentUser = authService.getCurrentUser()
                     var isCheckingSession by remember { mutableStateOf(currentUser != null) }
                     var isAuthenticated by remember { mutableStateOf(currentUser != null) }

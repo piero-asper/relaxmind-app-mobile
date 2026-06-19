@@ -121,6 +121,7 @@ fun CreateAppointmentScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             RelaxTopBar(
                 title = "Nuevo evento",

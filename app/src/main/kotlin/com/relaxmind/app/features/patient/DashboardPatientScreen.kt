@@ -90,6 +90,7 @@ fun DashboardPatientScreen(
     }
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         bottomBar = {
             RelaxBottomNav(
                 selectedRoute = "patient/dashboard",
@@ -101,6 +102,7 @@ fun DashboardPatientScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
                 .padding(innerPadding)
         ) {
             if (isLoading && patient == null) {
@@ -141,7 +143,7 @@ fun DashboardPatientScreen(
 
                     // Diary Card Shortcut
                     DiaryBlock(
-                        onDiaryClick = { onNavigate(com.relaxmind.app.Screen.DiaryEntry.route) }
+                        onDiaryClick = { onNavigate(com.relaxmind.app.Screen.Diary.route) }
                     )
 
                     // Next Appointment Block
@@ -652,7 +654,7 @@ private fun DiaryBlock(
             }
             Spacer(modifier = Modifier.width(8.dp))
             RelaxButton(
-                text = "Escribir",
+                text = "Ver diario",
                 onClick = onDiaryClick,
                 variant = ButtonVariant.PRIMARY,
                 role = AppRole.PATIENT

@@ -27,6 +27,7 @@ import com.relaxmind.app.features.patient.MeditationDetailScreen
 import com.relaxmind.app.features.patient.ScheduleScreen
 import com.relaxmind.app.features.patient.CreateAppointmentScreen
 import com.relaxmind.app.features.patient.AppointmentDetailScreen
+import com.relaxmind.app.features.patient.DiaryScreen
 import com.relaxmind.app.features.patient.DiaryEntryScreen
 
 sealed class Screen(val route: String) {
@@ -55,6 +56,7 @@ sealed class Screen(val route: String) {
 
         fun createRoute(appointmentId: String): String = "patient/appointments/$appointmentId"
     }
+    data object Diary : Screen("patient/diary")
     data object DiaryEntry : Screen("patient/diary-entry")
     data object LumiChat : Screen("patient/lumi")
     data object LumiHistory : Screen("patient/lumi/history")
@@ -271,9 +273,20 @@ fun AppNavGraph(
                 onNavigateBack = { navController.popBackStack() }
             )
         }
+        composable(Screen.Diary.route) {
+            DiaryScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onCreateEntry = { navController.navigate(Screen.DiaryEntry.route) }
+            )
+        }
         composable(Screen.DiaryEntry.route) {
             DiaryEntryScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onSaved = {
+                    navController.navigate(Screen.Diary.route) {
+                        popUpTo(Screen.Diary.route) { inclusive = true }
+                    }
+                }
             )
         }
         composable(Screen.LumiChat.route) { PlaceholderScreen("Pantalla Lumi Chat") }

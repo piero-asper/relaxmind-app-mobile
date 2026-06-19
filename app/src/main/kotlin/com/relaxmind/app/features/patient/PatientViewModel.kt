@@ -101,6 +101,9 @@ class PatientViewModel(
     private val _monthlyDiaryEntries = MutableStateFlow<List<DiaryEntry>>(emptyList())
     val monthlyDiaryEntries = _monthlyDiaryEntries.asStateFlow()
 
+    private val _diaryEntries = MutableStateFlow<List<DiaryEntry>>(emptyList())
+    val diaryEntries = _diaryEntries.asStateFlow()
+
     private val _selectedAppointment = MutableStateFlow<Appointment?>(null)
     val selectedAppointment = _selectedAppointment.asStateFlow()
 
@@ -562,6 +565,24 @@ class PatientViewModel(
             if (diariesResult.isSuccess) {
                 _monthlyDiaryEntries.value = diariesResult.getOrDefault(emptyList())
             }
+            _isLoading.value = false
+        }
+    }
+
+    fun loadDiaryEntries() {
+        val userId = authService.getCurrentUser()?.uid ?: return
+        viewModelScope.launch {
+            _isLoading.value = true
+            _error.value = null
+
+            val result = firestoreRepository.getDiaryEntries(userId)
+            if (result.isSuccess) {
+                _diaryEntries.value = result.getOrDefault(emptyList())
+            } else {
+                _error.value = result.exceptionOrNull()?.localizedMessage
+                    ?: "Error al cargar el diario."
+            }
+
             _isLoading.value = false
         }
     }
