@@ -119,13 +119,9 @@ fun RegisterScreen(
     }
 
     // ── Real-time validations ────────────────────────────────────────────────
-    val nameError = if (name.isNotEmpty()) {
-        if (name.length < 2) "Mínimo 2 caracteres." else null
-    } else null
+    val nameError = if (name.isNotEmpty()) ValidationUtils.validateName(name) else null
 
-    val lastNameError = if (lastName.isNotEmpty()) {
-        if (lastName.length < 2) "Mínimo 2 caracteres." else null
-    } else null
+    val lastNameError = if (lastName.isNotEmpty()) ValidationUtils.validateLastName(lastName) else null
 
     val birthDateError = if (birthDate.isNotEmpty()) {
         validateAge(birthDate)
@@ -133,13 +129,7 @@ fun RegisterScreen(
 
     val emailError = if (email.isNotEmpty()) ValidationUtils.validateEmail(email) else null
 
-    val passwordError = if (password.isNotEmpty()) {
-        when {
-            password.length < 8 -> "Mínimo 8 caracteres."
-            !password.any { it.isDigit() } -> "Debe contener al menos un número."
-            else -> null
-        }
-    } else null
+    val passwordError = if (password.isNotEmpty()) ValidationUtils.validatePassword(password) else null
 
     val confirmPasswordError = if (confirmPassword.isNotEmpty()) {
         if (password != confirmPassword) "Las contraseñas no coinciden." else null
@@ -190,7 +180,7 @@ fun RegisterScreen(
                 // ── Name ─────────────────────────────────────────────────
                 RelaxInputField(
                     value = name,
-                    onValueChange = { name = it },
+                    onValueChange = { name = it.onlyLettersAndSpaces() },
                     label = "Nombre",
                     leadingIcon = RelaxIcons.Person,
                     role = selectedAppRole,
@@ -202,7 +192,7 @@ fun RegisterScreen(
                 // ── Last name ─────────────────────────────────────────────
                 RelaxInputField(
                     value = lastName,
-                    onValueChange = { lastName = it },
+                    onValueChange = { lastName = it.onlyLettersAndSpaces() },
                     label = "Apellidos",
                     leadingIcon = RelaxIcons.Person,
                     role = selectedAppRole,
@@ -269,6 +259,11 @@ fun RegisterScreen(
                     },
                     isError = passwordError != null,
                     errorMessage = passwordError,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                PasswordStrengthMeter(
+                    password = password,
+                    accentColor = selectedAccentColor,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -479,6 +474,64 @@ private fun validateAge(birthDate: String): String? {
         if (date.isAfter(minDate)) "Debes tener al menos 13 años." else null
     } catch (_: Exception) {
         "Formato de fecha inválido (dd/MM/yyyy)."
+    }
+}
+
+private fun String.onlyLettersAndSpaces(): String =
+    filter { it.isLetter() || it.isWhitespace() }.replace(Regex("\\s{2,}"), " ")
+
+@Composable
+private fun PasswordStrengthMeter(
+    password: String,
+    accentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    val score = remember(password) {
+        listOf(
+            password.length >= 8,
+            password.any { it.isDigit() },
+            password.any { it.isUpperCase() },
+            password.any { it.isLowerCase() },
+            password.any { !it.isLetterOrDigit() }
+        ).count { it }
+    }
+    val strengthText = when {
+        password.isBlank() -> "Ingresa una contraseña segura"
+        score <= 2 -> "Contraseña débil"
+        score <= 4 -> "Contraseña media"
+        else -> "Contraseña fuerte"
+    }
+    val strengthColor = when {
+        password.isBlank() -> MaterialTheme.colorScheme.outline
+        score <= 2 -> Color(0xFFE8582A)
+        score <= 4 -> Color(0xFFED8936)
+        else -> accentColor
+    }
+
+    Column(modifier = modifier.padding(top = 2.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            repeat(5) { index ->
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp)
+                        .clip(RoundedCornerShape(50))
+                        .background(
+                            if (password.isNotBlank() && index < score) strengthColor
+                            else MaterialTheme.colorScheme.outline.copy(alpha = 0.22f)
+                        )
+                )
+            }
+        }
+        Text(
+            text = strengthText,
+            modifier = Modifier.padding(top = 6.dp, start = 4.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = strengthColor
+        )
     }
 }
 
