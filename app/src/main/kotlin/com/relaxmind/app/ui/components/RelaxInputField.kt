@@ -1,14 +1,20 @@
 package com.relaxmind.app.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
@@ -16,7 +22,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Icon
-import com.relaxmind.app.ui.themes.PatientGreen
 import com.relaxmind.app.ui.themes.RelaxMindTheme
 import com.relaxmind.app.ui.themes.SOSCoral
 
@@ -29,10 +34,13 @@ fun RelaxInputField(
     isError: Boolean = false,
     errorMessage: String? = null,
     leadingIcon: ImageVector? = null,
+    role: AppRole = AppRole.PATIENT,
     trailingIcon: @Composable (() -> Unit)? = null,
     keyboardType: KeyboardType = KeyboardType.Text,
     visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
+    val accentColor = role.primaryColor()
+
     Column(modifier = modifier) {
         OutlinedTextField(
             value = value,
@@ -41,7 +49,22 @@ fun RelaxInputField(
             label = { Text(text = label) },
             isError = isError,
             leadingIcon = leadingIcon?.let { icon ->
-                { Icon(imageVector = icon, contentDescription = null) }
+                {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(accentColor.copy(alpha = 0.12f)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = null,
+                            tint = accentColor,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                }
             },
             trailingIcon = trailingIcon,
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
@@ -49,9 +72,9 @@ fun RelaxInputField(
             singleLine = true,
             textStyle = MaterialTheme.typography.bodyLarge,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = PatientGreen,
-                focusedLabelColor = PatientGreen,
-                cursorColor = PatientGreen,
+                focusedBorderColor = accentColor,
+                focusedLabelColor = accentColor,
+                cursorColor = accentColor,
                 errorBorderColor = SOSCoral,
                 errorLabelColor = SOSCoral,
                 errorCursorColor = SOSCoral

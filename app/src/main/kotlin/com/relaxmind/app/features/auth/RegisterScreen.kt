@@ -44,6 +44,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -54,7 +55,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.relaxmind.app.ui.components.AppRole
 import com.relaxmind.app.ui.components.ButtonVariant
@@ -96,6 +96,8 @@ fun RegisterScreen(
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var selectedRole by remember { mutableStateOf("patient") }
     var termsAccepted by remember { mutableStateOf(false) }
+    val selectedAppRole = if (selectedRole == "caregiver") AppRole.CAREGIVER else AppRole.PATIENT
+    val selectedAccentColor = if (selectedRole == "caregiver") CaregiverIndigo else PatientGreen
 
     // ── Date picker ─────────────────────────────────────────────────────────
     val calendar = Calendar.getInstance()
@@ -191,6 +193,7 @@ fun RegisterScreen(
                     onValueChange = { name = it },
                     label = "Nombre",
                     leadingIcon = RelaxIcons.Person,
+                    role = selectedAppRole,
                     isError = nameError != null,
                     errorMessage = nameError,
                     modifier = Modifier.fillMaxWidth()
@@ -202,6 +205,7 @@ fun RegisterScreen(
                     onValueChange = { lastName = it },
                     label = "Apellidos",
                     leadingIcon = RelaxIcons.Person,
+                    role = selectedAppRole,
                     isError = lastNameError != null,
                     errorMessage = lastNameError,
                     modifier = Modifier.fillMaxWidth()
@@ -213,12 +217,13 @@ fun RegisterScreen(
                     onValueChange = {},
                     label = "Fecha de nacimiento",
                     leadingIcon = RelaxIcons.Calendar,
+                    role = selectedAppRole,
                     trailingIcon = {
                         IconButton(onClick = { datePickerDialog.show() }) {
                             Icon(
                                 imageVector = RelaxIcons.Calendar,
                                 contentDescription = "Seleccionar fecha",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = selectedAccentColor
                             )
                         }
                     },
@@ -235,6 +240,7 @@ fun RegisterScreen(
                     onValueChange = { email = it },
                     label = "Correo electrónico",
                     leadingIcon = RelaxIcons.Email,
+                    role = selectedAppRole,
                     keyboardType = KeyboardType.Email,
                     isError = emailError != null,
                     errorMessage = emailError,
@@ -247,6 +253,7 @@ fun RegisterScreen(
                     onValueChange = { password = it },
                     label = "Contraseña",
                     leadingIcon = RelaxIcons.Lock,
+                    role = selectedAppRole,
                     keyboardType = KeyboardType.Password,
                     visualTransformation = if (passwordVisible) VisualTransformation.None
                     else PasswordVisualTransformation(),
@@ -256,7 +263,7 @@ fun RegisterScreen(
                                 imageVector = if (passwordVisible) RelaxIcons.Eye
                                 else RelaxIcons.EyeOff,
                                 contentDescription = if (passwordVisible) "Ocultar" else "Mostrar",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = selectedAccentColor
                             )
                         }
                     },
@@ -271,6 +278,7 @@ fun RegisterScreen(
                     onValueChange = { confirmPassword = it },
                     label = "Confirmar contraseña",
                     leadingIcon = RelaxIcons.Lock,
+                    role = selectedAppRole,
                     keyboardType = KeyboardType.Password,
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None
                     else PasswordVisualTransformation(),
@@ -280,7 +288,7 @@ fun RegisterScreen(
                                 imageVector = if (confirmPasswordVisible) RelaxIcons.Eye
                                 else RelaxIcons.EyeOff,
                                 contentDescription = if (confirmPasswordVisible) "Ocultar" else "Mostrar",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = selectedAccentColor
                             )
                         }
                     },
@@ -304,7 +312,7 @@ fun RegisterScreen(
                 ) {
                     RoleCard(
                         label = "Paciente",
-                        emoji = "🌿",
+                        icon = RelaxIcons.Person,
                         isSelected = selectedRole == "patient",
                         selectedBorderColor = PatientGreen,
                         selectedBgColor = PatientGreen.copy(alpha = 0.08f),
@@ -313,7 +321,7 @@ fun RegisterScreen(
                     )
                     RoleCard(
                         label = "Cuidador",
-                        emoji = "🤝",
+                        icon = RelaxIcons.Groups,
                         isSelected = selectedRole == "caregiver",
                         selectedBorderColor = CaregiverIndigo,
                         selectedBgColor = CaregiverIndigo.copy(alpha = 0.08f),
@@ -404,7 +412,7 @@ fun RegisterScreen(
 @Composable
 private fun RoleCard(
     label: String,
-    emoji: String,
+    icon: ImageVector,
     isSelected: Boolean,
     selectedBorderColor: Color,
     selectedBgColor: Color,
@@ -442,7 +450,12 @@ private fun RoleCard(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Text(text = emoji, fontSize = 24.sp)
+            Icon(
+                imageVector = icon,
+                contentDescription = label,
+                tint = if (isSelected) borderColor else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(28.dp)
+            )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = label,

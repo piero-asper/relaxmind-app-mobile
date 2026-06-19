@@ -1,5 +1,6 @@
 package com.relaxmind.app.features.auth
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.relaxmind.app.data.model.Caregiver
@@ -217,6 +218,7 @@ class AuthViewModel(
      */
     fun sendVerificationCode() {
         pendingOtp = (100_000..999_999).random().toString()
+        Log.d("RelaxMindOtp", "Verification OTP: $pendingOtp")
         _resendCount.value = 0
         startTimer()
 
@@ -273,6 +275,7 @@ class AuthViewModel(
 
         _resendCount.update { it + 1 }
         pendingOtp = (100_000..999_999).random().toString()
+        Log.d("RelaxMindOtp", "Verification OTP: $pendingOtp")
         startTimer()
 
         viewModelScope.launch {
@@ -304,7 +307,7 @@ class AuthViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            val role = _userRole.value
+            val role = resolveCurrentRole(userId).getOrNull()
             val result = when (role) {
                 "patient" -> firestoreRepository.updatePatient(userId, mapOf("avatarUrl" to avatarUrl))
                 "caregiver" -> firestoreRepository.updateCaregiver(userId, mapOf("avatarUrl" to avatarUrl))
@@ -335,7 +338,7 @@ class AuthViewModel(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            val role = _userRole.value
+            val role = resolveCurrentRole(userId).getOrNull()
             val result = when (role) {
                 "patient" -> firestoreRepository.updatePatient(
                     userId, mapOf("notificationsEnabled" to enabled)
@@ -389,6 +392,18 @@ class AuthViewModel(
     /** Clears any active error from the UI state. */
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    fun clearSuccess() {
+        _uiState.update { it.copy(success = false) }
+    }
+
+    private suspend fun resolveCurrentRole(userId: String): Result<String> {
+        _userRole.value?.let { return Result.success(it) }
+
+        val roleResult = firestoreRepository.getRoleById(userId)
+        roleResult.getOrNull()?.let { role -> _userRole.value = role }
+        return roleResult
     }
 
     // ── Timer ──────────────────────────────────────────────────────────────

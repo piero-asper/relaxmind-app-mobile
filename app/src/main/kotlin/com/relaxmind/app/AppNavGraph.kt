@@ -12,7 +12,10 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.relaxmind.app.features.auth.AvatarSetupScreen
+import com.relaxmind.app.features.auth.EmailVerificationScreen
 import com.relaxmind.app.features.auth.LoginScreen
+import com.relaxmind.app.features.auth.NotificationPermissionScreen
 import com.relaxmind.app.features.auth.RegisterScreen
 import com.relaxmind.app.features.common.WelcomeScreen
 
@@ -124,9 +127,41 @@ fun AppNavGraph(
                 }
             )
         }
-        composable(Screen.EmailVerification.route) { PlaceholderScreen("Pantalla Email Verification") }
-        composable(Screen.AvatarSetup.route) { PlaceholderScreen("Pantalla Avatar Setup") }
-        composable(Screen.NotificationPermission.route) { PlaceholderScreen("Pantalla Notification Permission") }
+        composable(Screen.EmailVerification.route) {
+            EmailVerificationScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onVerified = {
+                    navController.navigate(Screen.AvatarSetup.route) {
+                        popUpTo(Screen.EmailVerification.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Screen.AvatarSetup.route) {
+            AvatarSetupScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onContinue = {
+                    navController.navigate(Screen.NotificationPermission.route) {
+                        popUpTo(Screen.AvatarSetup.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Screen.NotificationPermission.route) {
+            NotificationPermissionScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onContinuePatient = {
+                    navController.navigate(Screen.PatientDashboard.route) {
+                        popUpTo(Screen.NotificationPermission.route) { inclusive = true }
+                    }
+                },
+                onContinueCaregiver = {
+                    navController.navigate(Screen.CaregiverDashboard.route) {
+                        popUpTo(Screen.NotificationPermission.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Screen.ForgotPassword.route) { PlaceholderScreen("Pantalla Forgot Password") }
 
         composable(Screen.PatientDashboard.route) { PlaceholderScreen("Pantalla Patient Dashboard") }

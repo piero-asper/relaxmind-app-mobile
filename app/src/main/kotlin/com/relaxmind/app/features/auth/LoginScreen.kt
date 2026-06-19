@@ -191,7 +191,7 @@ fun LoginScreen(
                                 else RelaxIcons.EyeOff,
                                 contentDescription = if (passwordVisible) "Ocultar contraseña"
                                 else "Mostrar contraseña",
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                tint = PatientGreen
                             )
                         }
                     },
