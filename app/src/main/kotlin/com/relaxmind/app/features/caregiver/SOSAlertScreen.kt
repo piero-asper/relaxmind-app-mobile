@@ -122,16 +122,16 @@ fun SOSAlertScreen(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Spacer(modifier = Modifier.weight(1f))
+                    BlinkingAlertText()
+                    Spacer(modifier = Modifier.weight(1f))
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = RelaxIcons.ArrowBack,
-                            contentDescription = "Volver",
+                            imageVector = RelaxIcons.Close,
+                            contentDescription = "Cerrar",
                             tint = Color.White
                         )
                     }
-                    Spacer(modifier = Modifier.weight(1f))
-                    BlinkingAlertText()
-                    Spacer(modifier = Modifier.weight(1.5f))
                 }
 
                 Spacer(modifier = Modifier.weight(1f))
@@ -167,23 +167,6 @@ fun SOSAlertScreen(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            RelaxButton(
-                text = "LLAMAR AL PACIENTE",
-                onClick = {
-                    val phone = uiState.patientPhone
-                    if (phone.isNotBlank()) {
-                        val intent = Intent(Intent.ACTION_DIAL).apply {
-                            data = Uri.parse("tel:$phone")
-                        }
-                        context.startActivity(intent)
-                    }
-                },
-                variant = ButtonVariant.DESTRUCTIVE,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
             if (hasLocation) {
                 Box(
                     modifier = Modifier
@@ -203,21 +186,49 @@ fun SOSAlertScreen(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "Lat: $lat, Lng: $lng",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray
+                )
+
                 Spacer(modifier = Modifier.height(16.dp))
 
-                RelaxButton(
-                    text = "VER RUTA",
-                    onClick = {
-                        val intent = Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving")
-                        )
-                        context.startActivity(intent)
-                    },
-                    variant = ButtonVariant.OUTLINE,
-                    role = AppRole.PATIENT,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    RelaxButton(
+                        text = "LLAMAR",
+                        onClick = {
+                            val phone = uiState.patientPhone
+                            if (phone.isNotBlank()) {
+                                val intent = Intent(Intent.ACTION_DIAL).apply {
+                                    data = Uri.parse("tel:$phone")
+                                }
+                                context.startActivity(intent)
+                            }
+                        },
+                        variant = ButtonVariant.DESTRUCTIVE,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    RelaxButton(
+                        text = "VER RUTA",
+                        onClick = {
+                            val intent = Intent(
+                                Intent.ACTION_VIEW,
+                                Uri.parse("https://www.google.com/maps/dir/?api=1&destination=$lat,$lng&travelmode=driving")
+                            )
+                            context.startActivity(intent)
+                        },
+                        variant = ButtonVariant.OUTLINE,
+                        role = AppRole.PATIENT,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
             } else {
                 Box(
                     modifier = Modifier
@@ -228,6 +239,23 @@ fun SOSAlertScreen(
                 ) {
                     Text("Obteniendo ubicación...", color = Color.Gray)
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                RelaxButton(
+                    text = "LLAMAR AL PACIENTE",
+                    onClick = {
+                        val phone = uiState.patientPhone
+                        if (phone.isNotBlank()) {
+                            val intent = Intent(Intent.ACTION_DIAL).apply {
+                                data = Uri.parse("tel:$phone")
+                            }
+                            context.startActivity(intent)
+                        }
+                    },
+                    variant = ButtonVariant.DESTRUCTIVE,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             Spacer(modifier = Modifier.weight(1f))
