@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialException
-import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.relaxmind.app.BuildConfig
 import java.security.MessageDigest
@@ -27,14 +27,12 @@ object GoogleAuthHelper {
             error("Google Web Client ID no configurado. Falta GOOGLE_WEB_CLIENT_ID en local.properties")
         }
 
-        val googleIdOption = GetGoogleIdOption.Builder()
-            .setFilterByAuthorizedAccounts(false)
-            .setServerClientId(webClientId)
+        val googleSignInOption = GetSignInWithGoogleOption.Builder(webClientId)
             .setNonce(hashedNonce)
             .build()
 
         val request = GetCredentialRequest.Builder()
-            .addCredentialOption(googleIdOption)
+            .addCredentialOption(googleSignInOption)
             .build()
 
         try {
