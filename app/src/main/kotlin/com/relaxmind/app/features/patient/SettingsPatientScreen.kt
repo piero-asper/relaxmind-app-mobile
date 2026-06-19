@@ -349,6 +349,7 @@ fun SettingsPatientScreen(
                     text = "Confirmar",
                     onClick = {
                         showLogoutDialog = false
+                        viewModel.logout()
                         onLogout()
                     },
                     role = AppRole.PATIENT

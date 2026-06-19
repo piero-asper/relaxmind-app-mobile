@@ -875,6 +875,10 @@ class PatientViewModel(
         }.getOrNull()
     }
 
+    fun logout() {
+        authService.logout()
+    }
+
     fun clearError() {
         _error.value = null
     }
