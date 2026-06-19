@@ -196,30 +196,59 @@ object RelaxIcons {
     }
 
     val Meditation: ImageVector = outlinedIcon("RelaxMeditation") {
-        path(stroke = SolidColor(Color.Black), strokeLineWidth = 1.8f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
-            moveTo(12f, 5f)
-            arcToRelative(2f, 2f, 0f, true, true, 0f, 4f)
-            arcToRelative(2f, 2f, 0f, true, true, 0f, -4f)
-            moveTo(12f, 10f)
-            verticalLineTo(14f)
-            moveTo(8f, 12f)
-            lineTo(16f, 12f)
-            moveTo(5f, 19f)
-            quadTo(9f, 15f, 12f, 18f)
-            quadTo(15f, 15f, 19f, 19f)
+        path(fill = SolidColor(Color.Black)) {
+            // Center leaf: X from 10 to 14, Y from 6 to 18
+            moveTo(12f, 6f)
+            quadTo(14f, 11f, 13f, 18f)
+            lineTo(11f, 18f)
+            quadTo(10f, 11f, 12f, 6f)
+            close()
+
+            // Left leaf: pointing up-left
+            moveTo(11f, 11f)
+            quadTo(6f, 12f, 5f, 17f)
+            quadTo(8f, 18f, 11f, 15f)
+            close()
+
+            // Right leaf: pointing up-right
+            moveTo(13f, 11f)
+            quadTo(18f, 12f, 19f, 17f)
+            quadTo(16f, 18f, 13f, 15f)
+            close()
         }
     }
 
     val Progress: ImageVector = outlinedIcon("RelaxProgress") {
-        path(stroke = SolidColor(Color.Black), strokeLineWidth = 1.8f, strokeLineCap = StrokeCap.Round, strokeLineJoin = StrokeJoin.Round) {
-            moveTo(4f, 19f)
-            lineTo(9f, 14f)
-            lineTo(13f, 16f)
-            lineTo(20f, 7f)
-            moveTo(20f, 7f)
-            horizontalLineTo(15f)
-            moveTo(20f, 7f)
-            verticalLineTo(12f)
+        path(fill = SolidColor(Color.Black)) {
+            // Bar 1 (Left): Y from 13 to 19
+            moveTo(7f, 13f)
+            quadTo(8f, 13f, 8f, 14f)
+            lineTo(8f, 18f)
+            quadTo(8f, 19f, 7f, 19f)
+            quadTo(6f, 19f, 6f, 18f)
+            lineTo(6f, 14f)
+            quadTo(6f, 13f, 7f, 13f)
+            close()
+
+            // Bar 2 (Middle): Y from 9 to 19
+            moveTo(12f, 9f)
+            quadTo(13f, 9f, 13f, 10f)
+            lineTo(13f, 18f)
+            quadTo(13f, 19f, 12f, 19f)
+            quadTo(11f, 19f, 11f, 18f)
+            lineTo(11f, 10f)
+            quadTo(11f, 9f, 12f, 9f)
+            close()
+
+            // Bar 3 (Right): Y from 5 to 19
+            moveTo(17f, 5f)
+            quadTo(18f, 5f, 18f, 6f)
+            lineTo(18f, 18f)
+            quadTo(18f, 19f, 17f, 19f)
+            quadTo(16f, 19f, 16f, 18f)
+            lineTo(16f, 6f)
+            quadTo(16f, 5f, 17f, 5f)
+            close()
         }
     }
 

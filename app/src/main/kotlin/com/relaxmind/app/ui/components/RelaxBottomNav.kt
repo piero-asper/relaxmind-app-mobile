@@ -2,7 +2,9 @@ package com.relaxmind.app.ui.components
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -50,6 +52,10 @@ fun RelaxBottomNav(
         AppRole.CAREGIVER -> caregiverNavItems
     }
 
+    val navShape = if (role == AppRole.CAREGIVER) RoundedCornerShape(32.dp) else RoundedCornerShape(40.dp)
+    val navBgColor = if (role == AppRole.CAREGIVER) Color(0xFFFDFBFF) else Color(0xFFF4FAF7)
+    val navShadowColor = if (role == AppRole.CAREGIVER) Color(0xFF8A88A6).copy(alpha = 0.35f) else Color(0xFF68D391).copy(alpha = 0.15f)
+
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -63,12 +69,17 @@ fun RelaxBottomNav(
                 .height(82.dp)
                 .shadow(
                     elevation = 12.dp,
-                    shape = RoundedCornerShape(32.dp),
+                    shape = navShape,
                     clip = false,
-                    ambientColor = Color(0xFF8A88A6).copy(alpha = 0.35f),
-                    spotColor = Color(0xFF8A88A6).copy(alpha = 0.35f)
+                    ambientColor = navShadowColor,
+                    spotColor = navShadowColor
                 )
-                .background(Color(0xFFFDFBFF), RoundedCornerShape(32.dp))
+                .background(navBgColor, navShape)
+                .then(
+                    if (role == AppRole.PATIENT) {
+                        Modifier.border(1.dp, Color(0xFFE2F3EB), navShape)
+                    } else Modifier
+                )
                 .padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround
@@ -81,13 +92,15 @@ fun RelaxBottomNav(
                     CenterProgressNavButton(
                         item = item,
                         isSelected = isSelected,
-                        onClick = { onNavigate(item.route) }
+                        onClick = { onNavigate(item.route) },
+                        role = role
                     )
                 } else {
                     NormalNavItem(
                         item = item,
                         isSelected = isSelected,
-                        onClick = { onNavigate(item.route) }
+                        onClick = { onNavigate(item.route) },
+                        role = role
                     )
                 }
             }
@@ -99,10 +112,11 @@ fun RelaxBottomNav(
 private fun NormalNavItem(
     item: RelaxNavItem,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    role: AppRole
 ) {
-    val activeColor = if (item.route.startsWith("caregiver")) Color(0xFF2B6CB0) else PatientGreen
-    val inactiveColor = Color(0xFF8A88A6)
+    val activeColor = if (role == AppRole.CAREGIVER) Color(0xFF2B6CB0) else PatientGreen
+    val inactiveColor = if (role == AppRole.CAREGIVER) Color(0xFF8A88A6) else Color(0xFF8FA89B)
     val contentColor by animateColorAsState(
         targetValue = if (isSelected) activeColor else inactiveColor,
         label = "nav-item-color"
@@ -135,15 +149,20 @@ private fun NormalNavItem(
             color = contentColor
         )
         Spacer(modifier = Modifier.height(2.dp))
-        // Active indicator dot
-        Box(
-            modifier = Modifier
-                .size(4.dp)
-                .background(
-                    color = if (isSelected) activeColor else Color.Transparent,
-                    shape = CircleShape
-                )
-        )
+        
+        if (role == AppRole.CAREGIVER) {
+            // Active indicator dot only for caregiver
+            Box(
+                modifier = Modifier
+                    .size(4.dp)
+                    .background(
+                        color = if (isSelected) activeColor else Color.Transparent,
+                        shape = CircleShape
+                    )
+            )
+        } else {
+            Spacer(modifier = Modifier.height(4.dp))
+        }
     }
 }
 
@@ -151,14 +170,15 @@ private fun NormalNavItem(
 private fun CenterProgressNavButton(
     item: RelaxNavItem,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    role: AppRole
 ) {
     val activeColor = PatientGreen
-    val inactiveColor = Color(0xFF8A88A6)
+    val inactiveColor = if (role == AppRole.CAREGIVER) Color(0xFF8A88A6) else Color(0xFF8FA89B)
 
     Box(
         modifier = Modifier
-            .width(64.dp)
+            .width(68.dp)
             .fillMaxHeight()
             .clickable(
                 onClick = onClick,
@@ -172,26 +192,74 @@ private fun CenterProgressNavButton(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Center
         ) {
-            // Elevated green button
-            Box(
-                modifier = Modifier
-                    .offset(y = (-12).dp)
-                    .size(54.dp)
-                    .shadow(
-                        elevation = 6.dp,
-                        shape = CircleShape,
-                        ambientColor = PatientGreen.copy(alpha = 0.4f),
-                        spotColor = PatientGreen.copy(alpha = 0.4f)
+            if (role == AppRole.PATIENT) {
+                Box(
+                    modifier = Modifier.size(64.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // 1. Outer integration circle (matches navbar background color, soft green-tint shadow)
+                    Box(
+                        modifier = Modifier
+                          .offset(y = (-14).dp)
+                          .size(62.dp)
+                          .shadow(
+                              elevation = 4.dp,
+                              shape = CircleShape,
+                              ambientColor = Color(0xFF68D391).copy(alpha = 0.15f),
+                              spotColor = Color(0xFF68D391).copy(alpha = 0.15f)
+                          )
+                          .background(Color(0xFFF4FAF7), CircleShape)
                     )
-                    .background(PatientGreen, CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = item.icon,
-                    contentDescription = item.label,
-                    tint = Color.White,
-                    modifier = Modifier.size(26.dp)
-                )
+
+                    // 2. Elevated green button with linear gradient and soft glow shadow
+                    Box(
+                        modifier = Modifier
+                            .offset(y = (-14).dp)
+                            .size(52.dp)
+                            .shadow(
+                                elevation = 8.dp,
+                                shape = CircleShape,
+                                ambientColor = PatientGreen.copy(alpha = 0.35f),
+                                spotColor = PatientGreen.copy(alpha = 0.35f)
+                            )
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(Color(0xFF68D391), Color(0xFF0F6E56))
+                                ),
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = item.icon,
+                            contentDescription = item.label,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            } else {
+                // Default caregiver look
+                Box(
+                    modifier = Modifier
+                        .offset(y = (-12).dp)
+                        .size(54.dp)
+                        .shadow(
+                            elevation = 6.dp,
+                            shape = CircleShape,
+                            ambientColor = PatientGreen.copy(alpha = 0.4f),
+                            spotColor = PatientGreen.copy(alpha = 0.4f)
+                        )
+                        .background(PatientGreen, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = item.icon,
+                        contentDescription = item.label,
+                        tint = Color.White,
+                        modifier = Modifier.size(26.dp)
+                    )
+                }
             }
 
             Text(
@@ -200,18 +268,7 @@ private fun CenterProgressNavButton(
                 fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                 fontSize = 11.sp,
                 color = if (isSelected) activeColor else inactiveColor,
-                modifier = Modifier.offset(y = (-6).dp)
-            )
-
-            // Active indicator dot
-            Box(
-                modifier = Modifier
-                    .offset(y = (-4).dp)
-                    .size(4.dp)
-                    .background(
-                        color = if (isSelected) activeColor else Color.Transparent,
-                        shape = CircleShape
-                    )
+                modifier = Modifier.offset(y = if (role == AppRole.PATIENT) (-8).dp else (-6).dp)
             )
         }
     }
