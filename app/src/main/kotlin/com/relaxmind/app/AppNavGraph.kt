@@ -24,6 +24,10 @@ import com.relaxmind.app.features.patient.SettingsPatientScreen
 import com.relaxmind.app.features.patient.ProgressScreen
 import com.relaxmind.app.features.patient.MeditateScreen
 import com.relaxmind.app.features.patient.MeditationDetailScreen
+import com.relaxmind.app.features.patient.ScheduleScreen
+import com.relaxmind.app.features.patient.CreateAppointmentScreen
+import com.relaxmind.app.features.patient.AppointmentDetailScreen
+import com.relaxmind.app.features.patient.DiaryEntryScreen
 
 sealed class Screen(val route: String) {
     data object Welcome : Screen("welcome")
@@ -241,16 +245,37 @@ fun AppNavGraph(
                 }
             )
         }
-        composable(Screen.Schedule.route) { PlaceholderScreen("Pantalla Schedule") }
-        composable(Screen.CreateAppointment.route) { PlaceholderScreen("Pantalla Create Appointment") }
+        composable(Screen.Schedule.route) {
+            ScheduleScreen(
+                onNavigate = { route ->
+                    navController.navigate(route) {
+                        popUpTo(Screen.PatientDashboard.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
+        composable(Screen.CreateAppointment.route) {
+            CreateAppointmentScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
         composable(
             route = Screen.AppointmentDetail.route,
             arguments = listOf(navArgument(Screen.AppointmentDetail.AppointmentIdArg) { type = NavType.StringType })
         ) { backStackEntry ->
             val appointmentId = backStackEntry.arguments?.getString(Screen.AppointmentDetail.AppointmentIdArg).orEmpty()
-            PlaceholderScreen("Pantalla Appointment Detail: $appointmentId")
+            AppointmentDetailScreen(
+                appointmentId = appointmentId,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
-        composable(Screen.DiaryEntry.route) { PlaceholderScreen("Pantalla Diary Entry") }
+        composable(Screen.DiaryEntry.route) {
+            DiaryEntryScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
         composable(Screen.LumiChat.route) { PlaceholderScreen("Pantalla Lumi Chat") }
         composable(Screen.LumiHistory.route) { PlaceholderScreen("Pantalla Lumi History") }
         composable(Screen.PatientSettings.route) {

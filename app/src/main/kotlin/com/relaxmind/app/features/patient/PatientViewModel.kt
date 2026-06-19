@@ -11,6 +11,7 @@ import com.relaxmind.app.data.model.Patient
 import com.relaxmind.app.data.model.Streak
 import com.relaxmind.app.data.model.UserAchievement
 import com.relaxmind.app.data.model.CompletedMeditation
+import com.relaxmind.app.data.model.DiaryEntry
 import com.relaxmind.app.data.remote.FirebaseAuthService
 import com.relaxmind.app.data.remote.FirestoreRepository
 import kotlinx.coroutines.async
@@ -26,6 +27,17 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import java.util.Date
+import android.net.Uri
+import android.content.Context
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import java.util.concurrent.TimeUnit
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import java.io.ByteArrayOutputStream
+import kotlinx.coroutines.tasks.await
+import com.google.firebase.storage.FirebaseStorage
 
 class PatientViewModel(
     private val authService: FirebaseAuthService = FirebaseAuthService(),
@@ -80,6 +92,18 @@ class PatientViewModel(
     private val _selectedMonth = MutableStateFlow(LocalDate.now().monthValue)
     val selectedMonth = _selectedMonth.asStateFlow()
 
+    private val _selectedDateAppointments = MutableStateFlow<List<Appointment>>(emptyList())
+    val selectedDateAppointments = _selectedDateAppointments.asStateFlow()
+
+    private val _monthlyAppointments = MutableStateFlow<List<Appointment>>(emptyList())
+    val monthlyAppointments = _monthlyAppointments.asStateFlow()
+
+    private val _monthlyDiaryEntries = MutableStateFlow<List<DiaryEntry>>(emptyList())
+    val monthlyDiaryEntries = _monthlyDiaryEntries.asStateFlow()
+
+    private val _selectedAppointment = MutableStateFlow<Appointment?>(null)
+    val selectedAppointment = _selectedAppointment.asStateFlow()
+
     fun loadDashboardData() {
         val userId = authService.getCurrentUser()?.uid ?: run {
             _error.value = "No hay sesión activa."
@@ -133,14 +157,32 @@ class PatientViewModel(
                 _todayCheckIn.value = checkInResult.getOrNull()
 
                 // Map DailyGoal & Exercise
-                val goal = dailyGoalResult.getOrNull()
-                _dailyGoal.value = goal
-                if (goal != null) {
-                    val exerciseResult = firestoreRepository.getMeditationExercise(goal.exerciseId)
-                    _dailyGoalExercise.value = exerciseResult.getOrNull()
+                var goal = dailyGoalResult.getOrNull()
+                var goalExercise: MeditationExercise? = null
+                if (goal == null) {
+                    val exercises = checkAndSeedExercises()
+                    if (exercises.isNotEmpty()) {
+                        val randomExercise = exercises.random()
+                        val newGoal = DailyGoal(
+                            id = UUID.randomUUID().toString(),
+                            patientId = userId,
+                            date = todayDate,
+                            exerciseId = randomExercise.id,
+                            completed = false
+                        )
+                        val saveGoalResult = firestoreRepository.createDailyGoal(newGoal)
+                        if (saveGoalResult.isSuccess) {
+                            goal = newGoal
+                            goalExercise = randomExercise
+                        }
+                    }
                 } else {
-                    _dailyGoalExercise.value = null
+                    val exerciseResult = firestoreRepository.getMeditationExercise(goal.exerciseId)
+                    goalExercise = exerciseResult.getOrNull() ?: getDefaultExercises().find { it.id == goal.exerciseId }
                 }
+
+                _dailyGoal.value = goal
+                _dailyGoalExercise.value = goalExercise
 
                 // Map Next Appointment
                 val list = appointmentsResult.getOrNull() ?: emptyList()
@@ -314,13 +356,74 @@ class PatientViewModel(
         }
     }
 
+    private fun getDefaultExercises(): List<MeditationExercise> {
+        return listOf(
+            MeditationExercise(
+                id = "resp_478",
+                title = "Respiración 4-7-8",
+                description = "Un ejercicio clásico de respiración profunda para relajar el sistema nervioso.",
+                type = "respiracion",
+                durationMinutes = 5,
+                lottieAnimationUrl = "",
+                order = 1
+            ),
+            MeditationExercise(
+                id = "resp_caja",
+                title = "Respiración de caja",
+                description = "Técnica utilizada por profesionales para recuperar la calma y enfoque.",
+                type = "respiracion",
+                durationMinutes = 4,
+                lottieAnimationUrl = "",
+                order = 2
+            ),
+            MeditationExercise(
+                id = "body_scan",
+                title = "Escaneo corporal",
+                description = "Recorre mentalmente tu cuerpo para liberar la tensión física acumulada.",
+                type = "relajacion",
+                durationMinutes = 10,
+                lottieAnimationUrl = "",
+                order = 3
+            ),
+            MeditationExercise(
+                id = "gratitud",
+                title = "Meditación de gratitud",
+                description = "Enfoca tu mente en el aprecio y agradecimiento del momento presente.",
+                type = "mindfulness",
+                durationMinutes = 7,
+                lottieAnimationUrl = "",
+                order = 4
+            ),
+            MeditationExercise(
+                id = "resp_diafragmatica",
+                title = "Respiración diafragmática",
+                description = "Respiración abdominal profunda para inducir una respuesta rápida de relajación.",
+                type = "respiracion",
+                durationMinutes = 6,
+                lottieAnimationUrl = "",
+                order = 5
+            )
+        )
+    }
+
+    private suspend fun checkAndSeedExercises(): List<MeditationExercise> {
+        val result = firestoreRepository.getMeditationExercises()
+        var exercises = result.getOrDefault(emptyList())
+        if (exercises.isEmpty()) {
+            val defaults = getDefaultExercises()
+            for (exercise in defaults) {
+                firestoreRepository.createMeditationExercise(exercise)
+            }
+            exercises = defaults
+        }
+        return exercises
+    }
+
     fun loadMeditationExercises() {
         viewModelScope.launch {
             _isLoading.value = true
-            val result = firestoreRepository.getMeditationExercises()
-            if (result.isSuccess) {
-                _meditationExercises.value = result.getOrDefault(emptyList())
-            }
+            val exercises = checkAndSeedExercises()
+            _meditationExercises.value = exercises
             _isLoading.value = false
         }
     }
@@ -329,9 +432,11 @@ class PatientViewModel(
         viewModelScope.launch {
             _isLoading.value = true
             val result = firestoreRepository.getMeditationExercise(exerciseId)
-            if (result.isSuccess) {
-                _selectedExercise.value = result.getOrNull()
+            var exercise = result.getOrNull()
+            if (exercise == null) {
+                exercise = getDefaultExercises().find { it.id == exerciseId }
             }
+            _selectedExercise.value = exercise
             _isLoading.value = false
         }
     }
@@ -418,6 +523,276 @@ class PatientViewModel(
         viewModelScope.launch {
             _meditationCompleteSuccess.emit(null)
         }
+    }
+
+    fun loadAppointmentsForDate(date: String) {
+        val userId = authService.getCurrentUser()?.uid ?: return
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = firestoreRepository.getAppointments(userId, date)
+            if (result.isSuccess) {
+                _selectedDateAppointments.value = result.getOrDefault(emptyList()).sortedBy { it.time }
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun loadAppointmentDetail(appointmentId: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = firestoreRepository.getAppointment(appointmentId)
+            if (result.isSuccess) {
+                _selectedAppointment.value = result.getOrNull()
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun loadMonthlyEvents(year: Int, month: Int) {
+        val userId = authService.getCurrentUser()?.uid ?: return
+        val yearMonth = String.format("%d-%02d", year, month)
+        viewModelScope.launch {
+            _isLoading.value = true
+            val apptsResult = firestoreRepository.getAppointmentsForMonth(userId, yearMonth)
+            val diariesResult = firestoreRepository.getDiaryEntriesForMonth(userId, yearMonth)
+            
+            if (apptsResult.isSuccess) {
+                _monthlyAppointments.value = apptsResult.getOrDefault(emptyList())
+            }
+            if (diariesResult.isSuccess) {
+                _monthlyDiaryEntries.value = diariesResult.getOrDefault(emptyList())
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun createAppointment(
+        title: String,
+        type: String,
+        category: String,
+        date: String,
+        time: String,
+        reminderMinutes: Int,
+        notes: String,
+        context: Context,
+        onSuccess: () -> Unit
+    ) {
+        val userId = authService.getCurrentUser()?.uid ?: return
+        viewModelScope.launch {
+            _isLoading.value = true
+            val appointmentId = UUID.randomUUID().toString()
+            val appointment = Appointment(
+                id = appointmentId,
+                patientId = userId,
+                title = title,
+                type = type,
+                category = category,
+                date = date,
+                time = time,
+                reminderTime = reminderMinutes,
+                completed = false,
+                notificationSent = false,
+                notes = notes,
+                createdAt = Date()
+            )
+            
+            val result = firestoreRepository.createAppointment(appointment)
+            if (result.isSuccess) {
+                // Programar WorkManager reminder if in the future
+                scheduleAppointmentReminder(context, appointment)
+                onSuccess()
+            } else {
+                _error.value = result.exceptionOrNull()?.localizedMessage ?: "Error al guardar el evento."
+            }
+            _isLoading.value = false
+        }
+    }
+
+    private fun scheduleAppointmentReminder(context: Context, appointment: Appointment) {
+        runCatching {
+            val dateTimeStr = "${appointment.date}T${appointment.time}"
+            val formatter = java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME
+            val localDateTime = java.time.LocalDateTime.parse(dateTimeStr, formatter)
+            val appointmentMs = localDateTime.atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val targetMs = appointmentMs - (appointment.reminderTime * 60 * 1000)
+            val delayMs = targetMs - System.currentTimeMillis()
+            
+            if (delayMs > 0) {
+                val data = workDataOf(
+                    "appointmentId" to appointment.id,
+                    "title" to appointment.title,
+                    "type" to appointment.type
+                )
+                
+                val request = OneTimeWorkRequestBuilder<com.relaxmind.app.utils.AppointmentReminderWorker>()
+                    .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
+                    .setInputData(data)
+                    .addTag("appointment_${appointment.id}")
+                    .build()
+                
+                WorkManager.getInstance(context).enqueueUniqueWork(
+                    "appointment_${appointment.id}",
+                    androidx.work.ExistingWorkPolicy.REPLACE,
+                    request
+                )
+            }
+        }
+    }
+
+    fun updateAppointmentCompletion(appointmentId: String, completed: Boolean, date: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = firestoreRepository.updateAppointmentCompletion(appointmentId, completed)
+            if (result.isSuccess) {
+                loadAppointmentsForDate(date)
+                val parts = date.split("-")
+                if (parts.size == 3) {
+                    val year = parts[0].toIntOrNull() ?: LocalDate.now().year
+                    val month = parts[1].toIntOrNull() ?: LocalDate.now().monthValue
+                    loadMonthlyEvents(year, month)
+                }
+            } else {
+                _error.value = result.exceptionOrNull()?.localizedMessage ?: "Error al actualizar el evento."
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun deleteAppointment(appointmentId: String, date: String, onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = firestoreRepository.deleteAppointment(appointmentId)
+            if (result.isSuccess) {
+                loadAppointmentsForDate(date)
+                val parts = date.split("-")
+                if (parts.size == 3) {
+                    val year = parts[0].toIntOrNull() ?: LocalDate.now().year
+                    val month = parts[1].toIntOrNull() ?: LocalDate.now().monthValue
+                    loadMonthlyEvents(year, month)
+                }
+                onSuccess()
+            } else {
+                _error.value = result.exceptionOrNull()?.localizedMessage ?: "Error al eliminar el evento."
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun createDiaryEntry(
+        category: String,
+        emotion: String,
+        notes: String,
+        localPhotoUris: List<Uri>,
+        context: Context,
+        onSuccess: () -> Unit
+    ) {
+        val userId = authService.getCurrentUser()?.uid ?: return
+        val todayDate = LocalDate.now().toString()
+        viewModelScope.launch {
+            _isLoading.value = true
+            
+            val uploadedUrls = mutableListOf<String>()
+            localPhotoUris.take(5).forEachIndexed { index, uri ->
+                val url = compressAndUploadImage(uri, context, userId, index)
+                if (url != null) {
+                    uploadedUrls.add(url)
+                }
+            }
+            
+            val entryId = UUID.randomUUID().toString()
+            val diaryEntry = DiaryEntry(
+                id = entryId,
+                patientId = userId,
+                category = category,
+                emotion = emotion,
+                notes = notes,
+                photoUrls = uploadedUrls,
+                date = todayDate,
+                createdAt = Date()
+            )
+            
+            val result = firestoreRepository.createDiaryEntry(diaryEntry)
+            if (result.isSuccess) {
+                checkDiaryAchievements(userId)
+                onSuccess()
+            } else {
+                _error.value = result.exceptionOrNull()?.localizedMessage ?: "Error al guardar la entrada del diario."
+            }
+            _isLoading.value = false
+        }
+    }
+
+    private suspend fun checkDiaryAchievements(userId: String) {
+        val countResult = firestoreRepository.getDiaryEntriesCount(userId)
+        val achievementsResult = firestoreRepository.getPatientAchievements(userId)
+        
+        val totalCount = countResult.getOrDefault(0)
+        val unlockedAchievements = achievementsResult.getOrDefault(emptyList())
+        
+        suspend fun checkAndUnlock(key: String, title: String, desc: String, icon: String) {
+            if (unlockedAchievements.none { it.achievementKey == key }) {
+                val userAch = UserAchievement(
+                    id = UUID.randomUUID().toString(),
+                    patientId = userId,
+                    achievementKey = key,
+                    type = "diary",
+                    title = title,
+                    description = desc,
+                    iconUrl = icon,
+                    unlockedAt = LocalDate.now().toString()
+                )
+                firestoreRepository.unlockAchievement(userAch)
+                _achievements.value = _achievements.value + userAch
+            }
+        }
+        
+        if (totalCount >= 1) {
+            checkAndUnlock(
+                "first_diary",
+                "Primer relato",
+                "Primera entrada de diario creada",
+                "https://cdn-icons-png.flaticon.com/512/3588/3588658.png"
+            )
+        }
+        if (totalCount >= 7) {
+            checkAndUnlock(
+                "diary_7",
+                "Hábito de reflexión",
+                "7 entradas de diario completadas",
+                "https://cdn-icons-png.flaticon.com/512/3588/3588667.png"
+            )
+        }
+    }
+
+    private suspend fun compressAndUploadImage(uri: Uri, context: Context, userId: String, index: Int): String? {
+        return runCatching {
+            val contentResolver = context.contentResolver
+            val inputStream = contentResolver.openInputStream(uri) ?: return null
+            val originalBitmap = BitmapFactory.decodeStream(inputStream) ?: return null
+            
+            val maxSide = 1280
+            val width = originalBitmap.width
+            val height = originalBitmap.height
+            val (newWidth, newHeight) = if (width > height) {
+                if (width > maxSide) {
+                    Pair(maxSide, (height * (maxSide.toFloat() / width)).toInt())
+                } else Pair(width, height)
+            } else {
+                if (height > maxSide) {
+                    Pair((width * (maxSide.toFloat() / height)).toInt(), maxSide)
+                } else Pair(width, height)
+            }
+            
+            val scaledBitmap = Bitmap.createScaledBitmap(originalBitmap, newWidth, newHeight, true)
+            val outputStream = ByteArrayOutputStream()
+            scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)
+            val data = outputStream.toByteArray()
+            
+            val fileName = "${System.currentTimeMillis()}_$index.jpg"
+            val storageRef = FirebaseStorage.getInstance().getReference("diary_photos/$userId/$fileName")
+            storageRef.putBytes(data).await()
+            storageRef.downloadUrl.await().toString()
+        }.getOrNull()
     }
 
     fun clearError() {

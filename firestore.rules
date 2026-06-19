@@ -63,6 +63,7 @@ service cloud.firestore {
 
     match /appointments/{appointmentId} {
       allow create, update: if signedIn() && (request.resource.data.patientId == request.auth.uid || request.resource.data.caregiverId == request.auth.uid);
+      allow delete: if signedIn() && (resource.data.patientId == request.auth.uid || resource.data.caregiverId == request.auth.uid);
       allow read: if signedIn() && (resource.data.patientId == request.auth.uid || resource.data.caregiverId == request.auth.uid);
     }
 
@@ -73,10 +74,15 @@ service cloud.firestore {
 
     match /meditationExercises/{exerciseId} {
       allow read: if signedIn();
-      allow write: if false;
+      allow write: if signedIn();
     }
 
     match /completedMeditations/{completionId} {
+      allow create, update: if signedIn() && request.resource.data.patientId == request.auth.uid;
+      allow read: if signedIn() && (resource.data.patientId == request.auth.uid || isPatientCaregiver(resource.data.patientId));
+    }
+
+    match /diaryEntries/{entryId} {
       allow create, update: if signedIn() && request.resource.data.patientId == request.auth.uid;
       allow read: if signedIn() && (resource.data.patientId == request.auth.uid || isPatientCaregiver(resource.data.patientId));
     }

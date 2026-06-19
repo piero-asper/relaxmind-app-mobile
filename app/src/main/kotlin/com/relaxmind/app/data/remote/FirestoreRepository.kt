@@ -7,6 +7,7 @@ import com.relaxmind.app.data.model.CheckIn
 import com.relaxmind.app.data.model.DailyGoal
 import com.relaxmind.app.data.model.MeditationExercise
 import com.relaxmind.app.data.model.CompletedMeditation
+import com.relaxmind.app.data.model.DiaryEntry
 import com.relaxmind.app.data.model.Patient
 import com.relaxmind.app.data.model.Streak
 import com.relaxmind.app.data.model.UserAchievement
@@ -110,6 +111,13 @@ class FirestoreRepository(
             .toObject(MeditationExercise::class.java)
     }
 
+    suspend fun createMeditationExercise(exercise: MeditationExercise): Result<Unit> = runCatching {
+        firestore.collection(MEDITATION_EXERCISES_COLLECTION)
+            .document(exercise.id)
+            .set(exercise)
+            .await()
+    }
+
     suspend fun getAppointments(patientId: String, date: String): Result<List<Appointment>> = runCatching {
         firestore.collection(APPOINTMENTS_COLLECTION)
             .whereEqualTo("patientId", patientId)
@@ -180,6 +188,70 @@ class FirestoreRepository(
             .await()
     }
 
+    suspend fun createAppointment(appointment: Appointment): Result<Unit> = runCatching {
+        firestore.collection(APPOINTMENTS_COLLECTION)
+            .document(appointment.id.ifBlank { firestore.collection(APPOINTMENTS_COLLECTION).document().id })
+            .set(appointment)
+            .await()
+    }
+
+    suspend fun getAppointment(appointmentId: String): Result<Appointment?> = runCatching {
+        firestore.collection(APPOINTMENTS_COLLECTION)
+            .document(appointmentId)
+            .get()
+            .await()
+            .toObject(Appointment::class.java)
+    }
+
+    suspend fun updateAppointmentCompletion(appointmentId: String, completed: Boolean): Result<Unit> = runCatching {
+        firestore.collection(APPOINTMENTS_COLLECTION)
+            .document(appointmentId)
+            .update("completed", completed)
+            .await()
+    }
+
+    suspend fun deleteAppointment(appointmentId: String): Result<Unit> = runCatching {
+        firestore.collection(APPOINTMENTS_COLLECTION)
+            .document(appointmentId)
+            .delete()
+            .await()
+    }
+
+    suspend fun getAppointmentsForMonth(patientId: String, yearMonth: String): Result<List<Appointment>> = runCatching {
+        firestore.collection(APPOINTMENTS_COLLECTION)
+            .whereEqualTo("patientId", patientId)
+            .whereGreaterThanOrEqualTo("date", "$yearMonth-01")
+            .whereLessThanOrEqualTo("date", "$yearMonth-31")
+            .get()
+            .await()
+            .toObjectList(Appointment::class.java)
+    }
+
+    suspend fun createDiaryEntry(diaryEntry: DiaryEntry): Result<Unit> = runCatching {
+        firestore.collection(DIARY_ENTRIES_COLLECTION)
+            .document(diaryEntry.id.ifBlank { firestore.collection(DIARY_ENTRIES_COLLECTION).document().id })
+            .set(diaryEntry)
+            .await()
+    }
+
+    suspend fun getDiaryEntriesForMonth(patientId: String, yearMonth: String): Result<List<DiaryEntry>> = runCatching {
+        firestore.collection(DIARY_ENTRIES_COLLECTION)
+            .whereEqualTo("patientId", patientId)
+            .whereGreaterThanOrEqualTo("date", "$yearMonth-01")
+            .whereLessThanOrEqualTo("date", "$yearMonth-31")
+            .get()
+            .await()
+            .toObjectList(DiaryEntry::class.java)
+    }
+
+    suspend fun getDiaryEntriesCount(patientId: String): Result<Int> = runCatching {
+        firestore.collection(DIARY_ENTRIES_COLLECTION)
+            .whereEqualTo("patientId", patientId)
+            .get()
+            .await()
+            .size()
+    }
+
     private fun <T> com.google.firebase.firestore.QuerySnapshot.toObjectList(clazz: Class<T>): List<T> {
         return documents.mapNotNull { it.toObject(clazz) }
     }
@@ -192,6 +264,7 @@ class FirestoreRepository(
         const val MEDITATION_EXERCISES_COLLECTION = "meditationExercises"
         const val COMPLETED_MEDITATIONS_COLLECTION = "completedMeditations"
         const val APPOINTMENTS_COLLECTION = "appointments"
+        const val DIARY_ENTRIES_COLLECTION = "diaryEntries"
         const val STREAKS_COLLECTION = "streaks"
         const val ACHIEVEMENTS_COLLECTION = "achievements"
     }

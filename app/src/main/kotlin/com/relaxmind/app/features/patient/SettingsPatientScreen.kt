@@ -206,19 +206,32 @@ fun SettingsPatientScreen(
                     // SECCIÓN "SEGURIDAD"
                     SectionTitle("Seguridad")
                     RelaxCard(modifier = Modifier.fillMaxWidth()) {
+                        SettingsToggleRow(
+                            label = "Inicio con biometría",
+                            icon = Icons.Filled.Fingerprint,
+                            checked = currPatient.biometricEnabled,
+                            onToggle = { viewModel.updateBiometricEnabled(it) }
+                        )
+                    }
+
+                    // SECCIÓN "DATOS PERSONALES"
+                    SectionTitle("Datos personales")
+                    RelaxCard(modifier = Modifier.fillMaxWidth()) {
                         Column {
-                            SettingsToggleRow(
-                                label = "Inicio con biometría",
-                                icon = Icons.Filled.Fingerprint,
-                                checked = currPatient.biometricEnabled,
-                                onToggle = { viewModel.updateBiometricEnabled(it) }
-                            )
-                            Spacer(modifier = Modifier.height(4.dp))
+                            if (currPatient.caregiverId != null) {
+                                SettingsRow(
+                                    label = "Desvincular cuidador",
+                                    icon = Icons.Filled.LinkOff,
+                                    color = Color(0xFFED8936),
+                                    onClick = { showUnlinkDialog = true }
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                            }
                             SettingsRow(
-                                label = "Cerrar sesión",
-                                icon = Icons.AutoMirrored.Filled.ExitToApp,
-                                color = Color.Red,
-                                onClick = { showLogoutDialog = true }
+                                label = "Borrar cuenta",
+                                icon = Icons.Filled.Delete,
+                                color = Color.Gray,
+                                onClick = { showDeleteAccountDialog = true }
                             )
                         }
                     }
@@ -247,26 +260,15 @@ fun SettingsPatientScreen(
                         }
                     }
 
-                    // SECCIÓN "DATOS PERSONALES"
-                    SectionTitle("Datos personales")
+                    // SECCIÓN "SESIÓN"
+                    SectionTitle("Sesión")
                     RelaxCard(modifier = Modifier.fillMaxWidth()) {
-                        Column {
-                            if (currPatient.caregiverId != null) {
-                                SettingsRow(
-                                    label = "Desvincular cuidador",
-                                    icon = Icons.Filled.LinkOff,
-                                    color = Color(0xFFED8936),
-                                    onClick = { showUnlinkDialog = true }
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
-                            }
-                            SettingsRow(
-                                label = "Borrar cuenta",
-                                icon = Icons.Filled.Delete,
-                                color = PatientGreen,
-                                onClick = { showDeleteAccountDialog = true }
-                            )
-                        }
+                        SettingsRow(
+                            label = "Cerrar sesión",
+                            icon = Icons.AutoMirrored.Filled.ExitToApp,
+                            color = Color.Red,
+                            onClick = { showLogoutDialog = true }
+                        )
                     }
                 }
             }
