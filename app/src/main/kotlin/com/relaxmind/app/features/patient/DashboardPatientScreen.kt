@@ -59,6 +59,7 @@ import com.relaxmind.app.ui.components.RelaxCard
 import com.relaxmind.app.ui.components.RelaxIcons
 import com.relaxmind.app.utils.WellnessScoreCalculator
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -150,6 +151,11 @@ fun DashboardPatientScreen(
                     // Diary Card Shortcut
                     DiaryBlock(
                         onDiaryClick = { onNavigate(com.relaxmind.app.Screen.Diary.route) }
+                    )
+
+                    // Lumi Card
+                    LumiCardBlock(
+                        onLumiClick = { onNavigate(com.relaxmind.app.Screen.LumiChat.createRoute(null)) }
                     )
 
                     // Next Appointment Block
@@ -686,6 +692,64 @@ private fun DiaryBlock(
             RelaxButton(
                 text = "Ver diario",
                 onClick = onDiaryClick,
+                variant = ButtonVariant.PRIMARY,
+                role = AppRole.PATIENT
+            )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Lumi Card Block Composable
+// ---------------------------------------------------------------------------
+@Composable
+private fun LumiCardBlock(
+    onLumiClick: () -> Unit
+) {
+    RelaxCard(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .background(PatientGreen, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AutoAwesome,
+                        contentDescription = "Lumi AI",
+                        tint = Color.White,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column {
+                    Text(
+                        text = "Hablar con Lumi",
+                        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 16.sp),
+                        fontWeight = FontWeight.Bold,
+                        color = PatientGreen
+                    )
+                    Text(
+                        text = "Tu asistente IA de bienestar",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            RelaxButton(
+                text = "Chat",
+                onClick = onLumiClick,
                 variant = ButtonVariant.PRIMARY,
                 role = AppRole.PATIENT
             )
