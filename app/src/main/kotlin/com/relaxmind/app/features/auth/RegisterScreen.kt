@@ -21,13 +21,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -66,6 +59,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.relaxmind.app.ui.components.AppRole
 import com.relaxmind.app.ui.components.ButtonVariant
 import com.relaxmind.app.ui.components.LoadingIndicator
+import com.relaxmind.app.ui.components.RelaxIcons
 import com.relaxmind.app.ui.components.RelaxButton
 import com.relaxmind.app.ui.components.RelaxInputField
 import com.relaxmind.app.ui.components.RelaxTopBar
@@ -196,7 +190,7 @@ fun RegisterScreen(
                     value = name,
                     onValueChange = { name = it },
                     label = "Nombre",
-                    leadingIcon = Icons.Filled.Person,
+                    leadingIcon = RelaxIcons.Person,
                     isError = nameError != null,
                     errorMessage = nameError,
                     modifier = Modifier.fillMaxWidth()
@@ -207,7 +201,7 @@ fun RegisterScreen(
                     value = lastName,
                     onValueChange = { lastName = it },
                     label = "Apellidos",
-                    leadingIcon = Icons.Filled.Person,
+                    leadingIcon = RelaxIcons.Person,
                     isError = lastNameError != null,
                     errorMessage = lastNameError,
                     modifier = Modifier.fillMaxWidth()
@@ -218,11 +212,11 @@ fun RegisterScreen(
                     value = birthDate,
                     onValueChange = {},
                     label = "Fecha de nacimiento",
-                    leadingIcon = Icons.Filled.CalendarMonth,
+                    leadingIcon = RelaxIcons.Calendar,
                     trailingIcon = {
                         IconButton(onClick = { datePickerDialog.show() }) {
                             Icon(
-                                imageVector = Icons.Filled.CalendarMonth,
+                                imageVector = RelaxIcons.Calendar,
                                 contentDescription = "Seleccionar fecha",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -240,7 +234,7 @@ fun RegisterScreen(
                     value = email,
                     onValueChange = { email = it },
                     label = "Correo electrónico",
-                    leadingIcon = Icons.Filled.Email,
+                    leadingIcon = RelaxIcons.Email,
                     keyboardType = KeyboardType.Email,
                     isError = emailError != null,
                     errorMessage = emailError,
@@ -252,15 +246,15 @@ fun RegisterScreen(
                     value = password,
                     onValueChange = { password = it },
                     label = "Contraseña",
-                    leadingIcon = Icons.Filled.Lock,
+                    leadingIcon = RelaxIcons.Lock,
                     keyboardType = KeyboardType.Password,
                     visualTransformation = if (passwordVisible) VisualTransformation.None
                     else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
-                                imageVector = if (passwordVisible) Icons.Filled.Visibility
-                                else Icons.Filled.VisibilityOff,
+                                imageVector = if (passwordVisible) RelaxIcons.Eye
+                                else RelaxIcons.EyeOff,
                                 contentDescription = if (passwordVisible) "Ocultar" else "Mostrar",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -276,15 +270,15 @@ fun RegisterScreen(
                     value = confirmPassword,
                     onValueChange = { confirmPassword = it },
                     label = "Confirmar contraseña",
-                    leadingIcon = Icons.Filled.Lock,
+                    leadingIcon = RelaxIcons.Lock,
                     keyboardType = KeyboardType.Password,
                     visualTransformation = if (confirmPasswordVisible) VisualTransformation.None
                     else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
                             Icon(
-                                imageVector = if (confirmPasswordVisible) Icons.Filled.Visibility
-                                else Icons.Filled.VisibilityOff,
+                                imageVector = if (confirmPasswordVisible) RelaxIcons.Eye
+                                else RelaxIcons.EyeOff,
                                 contentDescription = if (confirmPasswordVisible) "Ocultar" else "Mostrar",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
                             )

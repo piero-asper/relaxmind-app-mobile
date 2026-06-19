@@ -18,12 +18,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.relaxmind.app.ui.components.AppRole
 import com.relaxmind.app.ui.components.ButtonVariant
 import com.relaxmind.app.ui.components.LoadingIndicator
+import com.relaxmind.app.ui.components.RelaxIcons
 import com.relaxmind.app.ui.components.RelaxButton
 import com.relaxmind.app.ui.components.RelaxInputField
 import com.relaxmind.app.ui.themes.PatientGreen
@@ -171,7 +166,7 @@ fun LoginScreen(
                     value = email,
                     onValueChange = { email = it },
                     label = "Correo electrónico",
-                    leadingIcon = Icons.Filled.Email,
+                    leadingIcon = RelaxIcons.Email,
                     keyboardType = KeyboardType.Email,
                     isError = emailError != null,
                     errorMessage = emailError,
@@ -185,15 +180,15 @@ fun LoginScreen(
                     value = password,
                     onValueChange = { password = it },
                     label = "Contraseña",
-                    leadingIcon = Icons.Filled.Lock,
+                    leadingIcon = RelaxIcons.Lock,
                     keyboardType = KeyboardType.Password,
                     visualTransformation = if (passwordVisible) VisualTransformation.None
                     else PasswordVisualTransformation(),
                     trailingIcon = {
                         IconButton(onClick = { passwordVisible = !passwordVisible }) {
                             Icon(
-                                imageVector = if (passwordVisible) Icons.Filled.Visibility
-                                else Icons.Filled.VisibilityOff,
+                                imageVector = if (passwordVisible) RelaxIcons.Eye
+                                else RelaxIcons.EyeOff,
                                 contentDescription = if (passwordVisible) "Ocultar contraseña"
                                 else "Mostrar contraseña",
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant
@@ -295,7 +290,7 @@ fun LoginScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Fingerprint,
+                            imageVector = RelaxIcons.Fingerprint,
                             contentDescription = "Inicio biométrico",
                             tint = PatientGreen,
                             modifier = Modifier.size(28.dp)

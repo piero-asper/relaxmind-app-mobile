@@ -1,15 +1,5 @@
 package com.relaxmind.app.ui.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ShowChart
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.Dashboard
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.SelfImprovement
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -66,18 +56,18 @@ private data class RelaxNavItem(
 )
 
 private val patientNavItems = listOf(
-    RelaxNavItem("patient/dashboard", "Dashboard", Icons.Filled.Dashboard),
-    RelaxNavItem("patient/meditate", "Meditar", Icons.Filled.SelfImprovement),
-    RelaxNavItem("patient/progress", "Progreso", Icons.AutoMirrored.Filled.ShowChart),
-    RelaxNavItem("patient/schedule", "Agenda", Icons.Filled.CalendarMonth),
-    RelaxNavItem("patient/lumi", "Lumi", Icons.Filled.SmartToy)
+    RelaxNavItem("patient/dashboard", "Dashboard", RelaxIcons.Dashboard),
+    RelaxNavItem("patient/meditate", "Meditar", RelaxIcons.Meditation),
+    RelaxNavItem("patient/progress", "Progreso", RelaxIcons.Progress),
+    RelaxNavItem("patient/schedule", "Agenda", RelaxIcons.Calendar),
+    RelaxNavItem("patient/lumi", "Lumi", RelaxIcons.Chat)
 )
 
 private val caregiverNavItems = listOf(
-    RelaxNavItem("caregiver/dashboard", "Dashboard", Icons.Filled.Dashboard),
-    RelaxNavItem("caregiver/patients", "Pacientes", Icons.Filled.Groups),
-    RelaxNavItem("caregiver/alerts", "Alertas", Icons.Filled.Notifications),
-    RelaxNavItem("caregiver/settings", "Ajustes", Icons.Filled.Settings)
+    RelaxNavItem("caregiver/dashboard", "Dashboard", RelaxIcons.Dashboard),
+    RelaxNavItem("caregiver/patients", "Pacientes", RelaxIcons.Groups),
+    RelaxNavItem("caregiver/alerts", "Alertas", RelaxIcons.Notifications),
+    RelaxNavItem("caregiver/settings", "Ajustes", RelaxIcons.Settings)
 )
 
 @Preview(name = "RelaxBottomNav Patient Light", showBackground = true)

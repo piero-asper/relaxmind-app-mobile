@@ -15,8 +15,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Icon
 import com.relaxmind.app.ui.themes.PatientGreen
 import com.relaxmind.app.ui.themes.RelaxMindTheme
@@ -79,7 +77,7 @@ private fun RelaxInputFieldLightPreview() {
             value = "paciente@mail.com",
             onValueChange = {},
             label = "Correo",
-            leadingIcon = Icons.Filled.Email
+            leadingIcon = RelaxIcons.Email
         )
     }
 }
@@ -94,7 +92,7 @@ private fun RelaxInputFieldDarkPreview() {
             label = "Correo",
             isError = true,
             errorMessage = "Ingresa un correo valido",
-            leadingIcon = Icons.Filled.Email
+            leadingIcon = RelaxIcons.Email
         )
     }
 }
