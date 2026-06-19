@@ -1,38 +1,22 @@
 package com.relaxmind.app.features.auth
 
 import android.app.DatePickerDialog
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -42,38 +26,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.relaxmind.app.ui.components.AppRole
-import com.relaxmind.app.ui.components.ButtonVariant
+import com.relaxmind.app.features.auth.components.RegisterFormCard
+import com.relaxmind.app.features.auth.components.RegisterHeader
+import com.relaxmind.app.features.auth.components.RelaxAuthBackButton
 import com.relaxmind.app.ui.components.FullScreenLoadingOverlay
-import com.relaxmind.app.ui.components.RelaxIcons
-import com.relaxmind.app.ui.components.RelaxButton
-import com.relaxmind.app.ui.components.RelaxInputField
-import com.relaxmind.app.ui.components.RelaxTopBar
+import com.relaxmind.app.ui.components.auth.SoftGradientBackground
+import com.relaxmind.app.ui.themes.BackgroundWhite
 import com.relaxmind.app.ui.themes.CaregiverIndigo
+import com.relaxmind.app.ui.themes.LexendTypography
 import com.relaxmind.app.ui.themes.PatientGreen
-import com.relaxmind.app.ui.themes.RelaxMindTheme
+import com.relaxmind.app.ui.themes.TextPrimary
+import com.relaxmind.app.ui.themes.TextSecondary
 import com.relaxmind.app.utils.ValidationUtils
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
-
-// ---------------------------------------------------------------------------
-// Screen
-// ---------------------------------------------------------------------------
 
 @Composable
 fun RegisterScreen(
@@ -96,8 +67,6 @@ fun RegisterScreen(
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var selectedRole by remember { mutableStateOf("patient") }
     var termsAccepted by remember { mutableStateOf(false) }
-    val selectedAppRole = if (selectedRole == "caregiver") AppRole.CAREGIVER else AppRole.PATIENT
-    val selectedAccentColor = if (selectedRole == "caregiver") CaregiverIndigo else PatientGreen
 
     // ── Date picker ─────────────────────────────────────────────────────────
     val calendar = Calendar.getInstance()
@@ -120,17 +89,12 @@ fun RegisterScreen(
 
     // ── Real-time validations ────────────────────────────────────────────────
     val nameError = if (name.isNotEmpty()) ValidationUtils.validateName(name) else null
-
     val lastNameError = if (lastName.isNotEmpty()) ValidationUtils.validateLastName(lastName) else null
-
     val birthDateError = if (birthDate.isNotEmpty()) {
         validateAge(birthDate)
     } else null
-
     val emailError = if (email.isNotEmpty()) ValidationUtils.validateEmail(email) else null
-
     val passwordError = if (password.isNotEmpty()) ValidationUtils.validatePassword(password) else null
-
     val confirmPasswordError = if (confirmPassword.isNotEmpty()) {
         if (password != confirmPassword) "Las contraseñas no coinciden." else null
     } else null
@@ -154,308 +118,122 @@ fun RegisterScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            RelaxTopBar(
-                title = "Crear cuenta",
-                onBackClick = onNavigateBack
-            )
-        },
-        snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            Column(
+    RegisterTheme {
+        Scaffold(
+            containerColor = BackgroundWhite,
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) }
+        ) { innerPadding ->
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .navigationBarsPadding()
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(innerPadding)
             ) {
+                // Soft gradient background
+                SoftGradientBackground()
 
-                // ── Name ─────────────────────────────────────────────────
-                RelaxInputField(
-                    value = name,
-                    onValueChange = { name = it.onlyLettersAndSpaces() },
-                    label = "Nombre",
-                    leadingIcon = RelaxIcons.Person,
-                    role = selectedAppRole,
-                    isError = nameError != null,
-                    errorMessage = nameError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // ── Last name ─────────────────────────────────────────────
-                RelaxInputField(
-                    value = lastName,
-                    onValueChange = { lastName = it.onlyLettersAndSpaces() },
-                    label = "Apellidos",
-                    leadingIcon = RelaxIcons.Person,
-                    role = selectedAppRole,
-                    isError = lastNameError != null,
-                    errorMessage = lastNameError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // ── Birth date (tap to open DatePicker) ───────────────────
-                RelaxInputField(
-                    value = birthDate,
-                    onValueChange = {},
-                    label = "Fecha de nacimiento",
-                    leadingIcon = RelaxIcons.Calendar,
-                    role = selectedAppRole,
-                    trailingIcon = {
-                        IconButton(onClick = { datePickerDialog.show() }) {
-                            Icon(
-                                imageVector = RelaxIcons.Calendar,
-                                contentDescription = "Seleccionar fecha",
-                                tint = selectedAccentColor
-                            )
-                        }
-                    },
-                    isError = birthDateError != null,
-                    errorMessage = birthDateError,
+                Column(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { datePickerDialog.show() }
-                )
-
-                // ── Email ─────────────────────────────────────────────────
-                RelaxInputField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = "Correo electrónico",
-                    leadingIcon = RelaxIcons.Email,
-                    role = selectedAppRole,
-                    keyboardType = KeyboardType.Email,
-                    isError = emailError != null,
-                    errorMessage = emailError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // ── Password ──────────────────────────────────────────────
-                RelaxInputField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = "Contraseña",
-                    leadingIcon = RelaxIcons.Lock,
-                    role = selectedAppRole,
-                    keyboardType = KeyboardType.Password,
-                    visualTransformation = if (passwordVisible) VisualTransformation.None
-                    else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
-                            Icon(
-                                imageVector = if (passwordVisible) RelaxIcons.Eye
-                                else RelaxIcons.EyeOff,
-                                contentDescription = if (passwordVisible) "Ocultar" else "Mostrar",
-                                tint = selectedAccentColor
-                            )
-                        }
-                    },
-                    isError = passwordError != null,
-                    errorMessage = passwordError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                PasswordStrengthMeter(
-                    password = password,
-                    accentColor = selectedAccentColor,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // ── Confirm password ──────────────────────────────────────
-                RelaxInputField(
-                    value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
-                    label = "Confirmar contraseña",
-                    leadingIcon = RelaxIcons.Lock,
-                    role = selectedAppRole,
-                    keyboardType = KeyboardType.Password,
-                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None
-                    else PasswordVisualTransformation(),
-                    trailingIcon = {
-                        IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
-                            Icon(
-                                imageVector = if (confirmPasswordVisible) RelaxIcons.Eye
-                                else RelaxIcons.EyeOff,
-                                contentDescription = if (confirmPasswordVisible) "Ocultar" else "Mostrar",
-                                tint = selectedAccentColor
-                            )
-                        }
-                    },
-                    isError = confirmPasswordError != null,
-                    errorMessage = confirmPasswordError,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // ── Role selector ─────────────────────────────────────────
-                Text(
-                    text = "¿Cuál es tu rol?",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .statusBarsPadding()
+                        .navigationBarsPadding()
+                        .imePadding()
+                        .padding(horizontal = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    RoleCard(
-                        label = "Paciente",
-                        icon = RelaxIcons.Person,
-                        isSelected = selectedRole == "patient",
-                        selectedBorderColor = PatientGreen,
-                        selectedBgColor = PatientGreen.copy(alpha = 0.08f),
-                        modifier = Modifier.weight(1f),
-                        onClick = { selectedRole = "patient" }
-                    )
-                    RoleCard(
-                        label = "Cuidador",
-                        icon = RelaxIcons.Groups,
-                        isSelected = selectedRole == "caregiver",
-                        selectedBorderColor = CaregiverIndigo,
-                        selectedBgColor = CaregiverIndigo.copy(alpha = 0.08f),
-                        modifier = Modifier.weight(1f),
-                        onClick = { selectedRole = "caregiver" }
-                    )
-                }
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // ── Terms checkbox ────────────────────────────────────────
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val checkColor = if (selectedRole == "caregiver") CaregiverIndigo else PatientGreen
-                    Checkbox(
-                        checked = termsAccepted,
-                        onCheckedChange = { termsAccepted = it },
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = checkColor,
-                            uncheckedColor = MaterialTheme.colorScheme.outline
-                        )
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    TextButton(onClick = { /* TODO: open terms */ }) {
-                        Text(
-                            text = buildAnnotatedString {
-                                append("Acepto los ")
-                                withStyle(
-                                    SpanStyle(
-                                        color = if (selectedRole == "caregiver") CaregiverIndigo else PatientGreen,
-                                        textDecoration = TextDecoration.Underline
-                                    )
-                                ) {
-                                    append("términos y condiciones")
-                                }
-                            },
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
+                    // Back button aligned left
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        RelaxAuthBackButton(onClick = onNavigateBack)
                     }
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // Header (Logo, title, subtitle & 3D illustration)
+                    RegisterHeader()
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // Main register form card
+                    RegisterFormCard(
+                        name = name,
+                        onNameChange = { name = it.onlyLettersAndSpaces() },
+                        nameError = nameError,
+                        lastName = lastName,
+                        onLastNameChange = { lastName = it.onlyLettersAndSpaces() },
+                        lastNameError = lastNameError,
+                        birthDate = birthDate,
+                        onBirthDateClick = { datePickerDialog.show() },
+                        birthDateError = birthDateError,
+                        email = email,
+                        onEmailChange = { email = it },
+                        emailError = emailError,
+                        password = password,
+                        onPasswordChange = { password = it },
+                        passwordError = passwordError,
+                        confirmPassword = confirmPassword,
+                        onConfirmPasswordChange = { confirmPassword = it },
+                        confirmPasswordError = confirmPasswordError,
+                        passwordVisible = passwordVisible,
+                        onTogglePasswordVisibility = { passwordVisible = !passwordVisible },
+                        confirmPasswordVisible = confirmPasswordVisible,
+                        onToggleConfirmPasswordVisibility = { confirmPasswordVisible = !confirmPasswordVisible },
+                        selectedRole = selectedRole,
+                        onRoleSelected = { selectedRole = it },
+                        termsAccepted = termsAccepted,
+                        onTermsAcceptedChange = { termsAccepted = it },
+                        onNavigateToTerms = { /* TODO: open terms screen or URL if exists */ },
+                        isFormValid = isFormValid,
+                        isLoading = uiState.isLoading,
+                        onSubmit = {
+                            viewModel.register(
+                                name = name,
+                                lastName = lastName,
+                                birthDate = birthDate,
+                                email = email,
+                                password = password,
+                                confirmPassword = confirmPassword,
+                                role = selectedRole
+                            )
+                        },
+                        onNavigateToLogin = onNavigateBack
+                    )
+
+                    Spacer(modifier = Modifier.height(32.dp))
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // ── Register button (color adapts to role) ─────────────────
-                RelaxButton(
-                    text = "Registrarme",
-                    onClick = {
-                        viewModel.register(
-                            name = name,
-                            lastName = lastName,
-                            birthDate = birthDate,
-                            email = email,
-                            password = password,
-                            confirmPassword = confirmPassword,
-                            role = selectedRole
-                        )
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    variant = ButtonVariant.PRIMARY,
-                    role = if (selectedRole == "caregiver") AppRole.CAREGIVER else AppRole.PATIENT,
-                    enabled = isFormValid && !uiState.isLoading
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
+                // Loading overlay
+                if (uiState.isLoading) {
+                    FullScreenLoadingOverlay()
+                }
             }
-
-            // ── Loading overlay ──────────────────────────────────────────
-            if (uiState.isLoading) FullScreenLoadingOverlay()
         }
     }
 }
 
-// ---------------------------------------------------------------------------
-// Role card composable
-// ---------------------------------------------------------------------------
-
+/** Local theme wrapper — Lexend typography + register light palette only on this screen. */
 @Composable
-private fun RoleCard(
-    label: String,
-    icon: ImageVector,
-    isSelected: Boolean,
-    selectedBorderColor: Color,
-    selectedBgColor: Color,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    val borderColor by animateColorAsState(
-        targetValue = if (isSelected) selectedBorderColor
-        else Color(0xFFCBD5E0),
-        animationSpec = tween(durationMillis = 250),
-        label = "role-border-$label"
-    )
-    val bgColor by animateColorAsState(
-        targetValue = if (isSelected) selectedBgColor else Color.White,
-        animationSpec = tween(durationMillis = 250),
-        label = "role-bg-$label"
+private fun RegisterTheme(content: @Composable () -> Unit) {
+    val registerColorScheme = lightColorScheme(
+        primary = PatientGreen,
+        onPrimary = BackgroundWhite,
+        background = BackgroundWhite,
+        onBackground = TextPrimary,
+        surface = BackgroundWhite,
+        onSurface = TextPrimary,
+        onSurfaceVariant = TextSecondary
     )
 
-    Card(
-        modifier = modifier
-            .height(90.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(
-            width = if (isSelected) 2.dp else 1.dp,
-            color = borderColor
-        ),
-        colors = CardDefaults.cardColors(containerColor = bgColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = label,
-                tint = if (isSelected) borderColor else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (isSelected) borderColor
-                else MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-    }
+    androidx.compose.material3.MaterialTheme(
+        colorScheme = registerColorScheme,
+        typography = LexendTypography,
+        content = content
+    )
 }
-
-// ---------------------------------------------------------------------------
-// Age validation helper (must be > 13 years)
-// ---------------------------------------------------------------------------
 
 private fun validateAge(birthDate: String): String? {
     return try {
@@ -471,72 +249,11 @@ private fun validateAge(birthDate: String): String? {
 private fun String.onlyLettersAndSpaces(): String =
     filter { it.isLetter() || it.isWhitespace() }.replace(Regex("\\s{2,}"), " ")
 
-@Composable
-private fun PasswordStrengthMeter(
-    password: String,
-    accentColor: Color,
-    modifier: Modifier = Modifier
-) {
-    val score = remember(password) {
-        listOf(
-            password.length >= 8,
-            password.any { it.isDigit() },
-            password.any { it.isUpperCase() },
-            password.any { it.isLowerCase() },
-            password.any { !it.isLetterOrDigit() }
-        ).count { it }
-    }
-    val strengthText = when {
-        password.isBlank() -> "Ingresa una contraseña segura"
-        score <= 2 -> "Contraseña débil"
-        score <= 4 -> "Contraseña media"
-        else -> "Contraseña fuerte"
-    }
-    val strengthColor = when {
-        password.isBlank() -> MaterialTheme.colorScheme.outline
-        score <= 2 -> Color(0xFFE8582A)
-        score <= 4 -> Color(0xFFED8936)
-        else -> accentColor
-    }
-
-    Column(modifier = modifier.padding(top = 2.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            repeat(5) { index ->
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(6.dp)
-                        .clip(RoundedCornerShape(50))
-                        .background(
-                            if (password.isNotBlank() && index < score) strengthColor
-                            else MaterialTheme.colorScheme.outline.copy(alpha = 0.22f)
-                        )
-                )
-            }
-        }
-        Text(
-            text = strengthText,
-            modifier = Modifier.padding(top = 6.dp, start = 4.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = strengthColor
-        )
-    }
-}
-
-// ---------------------------------------------------------------------------
-// Preview
-// ---------------------------------------------------------------------------
-
 @Preview(name = "RegisterScreen", showBackground = true, showSystemUi = true)
 @Composable
 private fun RegisterScreenPreview() {
-    RelaxMindTheme(darkTheme = false) {
-        RegisterScreen(
-            onNavigateBack = {},
-            onNavigateToEmailVerification = {}
-        )
-    }
+    RegisterScreen(
+        onNavigateBack = {},
+        onNavigateToEmailVerification = {}
+    )
 }
