@@ -34,6 +34,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.material3.Card
@@ -199,7 +200,7 @@ fun DashboardPatientScreen(
                         onSOSHoldTriggered = onNavigateToSOS,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
-                            .padding(bottom = 110.dp, end = 20.dp)
+                            .padding(bottom = 16.dp, end = 20.dp)
                     )
                 }
             }
@@ -223,6 +224,7 @@ private fun DashboardHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(
+            modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -232,7 +234,9 @@ private fun DashboardHeader(
                 onClick = onAvatarClick
             )
 
-            Column {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
                     text = "Hola, $patientName",
                     fontFamily = LexendFontFamily,
@@ -241,19 +245,19 @@ private fun DashboardHeader(
                     color = TextPrimary
                 )
                 Spacer(modifier = Modifier.height(3.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "Tu espacio de bienestar de hoy",
-                        fontFamily = LexendFontFamily,
-                        fontWeight = FontWeight.Normal,
-                        fontSize = 14.sp,
-                        color = TextSecondary
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(text = "🌿", fontSize = 14.sp)
-                }
+                Text(
+                    text = "Tu espacio seguro aquí",
+                    fontFamily = LexendFontFamily,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 14.sp,
+                    color = TextSecondary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
+
+        Spacer(modifier = Modifier.width(16.dp))
 
         // Notification Bell button
         SoftNotificationButton(
@@ -388,7 +392,7 @@ private fun WellbeingTodayCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(220.dp)
+            .height(180.dp)
             .shadow(
                 elevation = 16.dp,
                 shape = RoundedCornerShape(30.dp),
@@ -410,7 +414,7 @@ private fun WellbeingTodayCard(
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(24.dp),
+                    .padding(20.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -430,16 +434,16 @@ private fun WellbeingTodayCard(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(text = "✦", color = Color(0xFF68D391), fontSize = 16.sp)
                     }
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Cuidar tu mente cada día te acerca a tu mejor versión.",
+                        text = "Cuidar tu mente te acerca a tu mejor versión.",
                         fontFamily = LexendFontFamily,
                         fontWeight = FontWeight.Normal,
                         fontSize = 13.sp,
-                        lineHeight = 18.sp,
+                        lineHeight = 17.sp,
                         color = Color(0xFF5A5E6B)
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(14.dp))
 
                     // Pill Button
                     Row(
@@ -449,7 +453,7 @@ private fun WellbeingTodayCard(
                             .clickable {
                                 if (score != null) onProgressClick() else onCheckInClick()
                             }
-                            .padding(horizontal = 18.dp, vertical = 10.dp),
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
@@ -501,11 +505,11 @@ private fun CircularWellbeingProgress(
         contentAlignment = Alignment.Center
     ) {
         Box(
-            modifier = Modifier.size(115.dp),
+            modifier = Modifier.size(96.dp),
             contentAlignment = Alignment.Center
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                val strokeWidth = 9.dp.toPx()
+                val strokeWidth = 8.dp.toPx()
                 val diameter = size.minDimension - strokeWidth
                 val topLeft = androidx.compose.ui.geometry.Offset(
                     (size.width - diameter) / 2,
@@ -545,24 +549,24 @@ private fun CircularWellbeingProgress(
                         text = displayScore.toString(),
                         fontFamily = LexendFontFamily,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 26.sp,
+                        fontSize = 22.sp,
                         color = TextPrimary
                     )
                     Text(
                         text = "/100",
                         fontFamily = LexendFontFamily,
                         fontWeight = FontWeight.Medium,
-                        fontSize = 12.sp,
+                        fontSize = 11.sp,
                         color = TextSecondary,
-                        modifier = Modifier.padding(bottom = 4.dp)
+                        modifier = Modifier.padding(bottom = 3.dp)
                     )
                 }
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(1.dp))
                 Text(
                     text = if (score != null) (category ?: "Bueno") else "Bueno",
                     fontFamily = LexendFontFamily,
                     fontWeight = FontWeight.SemiBold,
-                    fontSize = 12.sp,
+                    fontSize = 10.sp,
                     color = PatientGreen
                 )
             }
@@ -1238,7 +1242,7 @@ private fun SOSFloatingButton(
             modifier = Modifier
                 .size(76.dp)
                 .scale(pulseScale)
-                .background(SOSCoral.copy(alpha = pulseAlpha), CircleShape)
+                .background(Color(0xFFFF5E5E).copy(alpha = pulseAlpha), CircleShape)
         )
 
         // Main Coral Button
@@ -1248,10 +1252,18 @@ private fun SOSFloatingButton(
                 .shadow(
                     elevation = 10.dp,
                     shape = CircleShape,
-                    ambientColor = SOSCoral.copy(alpha = 0.5f),
-                    spotColor = SOSCoral.copy(alpha = 0.5f)
+                    ambientColor = Color(0xFFC53030).copy(alpha = 0.4f),
+                    spotColor = Color(0xFFC53030).copy(alpha = 0.4f)
                 )
-                .background(SOSCoral, CircleShape)
+                .background(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            Color(0xFFFF5E5E), // Lighter red
+                            Color(0xFFC53030)  // Darker red
+                        )
+                    ),
+                    shape = CircleShape
+                )
                 .pointerInput(Unit) {
                     detectTapGestures(
                         onPress = {
@@ -1275,7 +1287,7 @@ private fun SOSFloatingButton(
                 verticalArrangement = Arrangement.Center
             ) {
                 Icon(
-                    imageVector = RelaxIcons.Meditation, // heart-styled icon placeholder in code
+                    imageVector = Icons.Filled.NotificationsActive, // Emergency alarm bell ringing icon
                     contentDescription = null,
                     tint = Color.White,
                     modifier = Modifier.size(20.dp)
