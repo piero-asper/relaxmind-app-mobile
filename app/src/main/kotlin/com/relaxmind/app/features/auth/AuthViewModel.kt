@@ -107,8 +107,9 @@ class AuthViewModel(
                 _uiState.update {
                     it.copy(
                         isLoading = false,
-                        error = registerResult.exceptionOrNull()?.localizedMessage
-                            ?: "Error al crear la cuenta."
+                        error = registerResult.exceptionOrNull().toUserMessage(
+                            fallback = "Error al crear la cuenta."
+                        )
                     )
                 }
                 return@launch
@@ -425,5 +426,17 @@ class AuthViewModel(
     override fun onCleared() {
         super.onCleared()
         timerJob?.cancel()
+    }
+}
+
+private fun Throwable?.toUserMessage(fallback: String): String {
+    val message = this?.localizedMessage.orEmpty()
+    return when {
+        "CONFIGURATION_NOT_FOUND" in message ->
+            "Firebase Auth no está configurado. Activa Email/Password en Firebase Console."
+        "email address is badly formatted" in message ->
+            "El correo electrónico no tiene un formato válido."
+        message.isNotBlank() -> message
+        else -> fallback
     }
 }
