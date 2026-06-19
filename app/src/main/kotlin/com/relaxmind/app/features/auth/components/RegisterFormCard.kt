@@ -408,7 +408,7 @@ private fun RoleCard(
         label = "role-bg-$label"
     )
 
-    val unselectedIconBgColor = if (label == "Cuidador") SoftLavender else SoftMint
+    val unselectedIconBgColor = if (label == "Cuidador") SoftBlue else SoftMint
 
     Card(
         modifier = modifier

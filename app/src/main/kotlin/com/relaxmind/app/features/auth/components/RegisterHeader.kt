@@ -32,7 +32,7 @@ fun RegisterHeader(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth(0.65f)
+                .fillMaxWidth(0.62f)
                 .align(Alignment.CenterStart)
         ) {
             Image(
@@ -69,7 +69,7 @@ fun RegisterHeader(
             painter = painterResource(id = R.drawable.registro),
             contentDescription = "Ilustración 3D Registro",
             modifier = Modifier
-                .size(150.dp)
+                .size(125.dp)
                 .align(Alignment.CenterEnd)
                 .offset(x = 10.dp),
             contentScale = ContentScale.Fit

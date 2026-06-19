@@ -1,9 +1,20 @@
 package com.relaxmind.app.features.patient
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +23,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -19,8 +31,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -31,38 +48,45 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.text.style.TextAlign
-import com.relaxmind.app.ui.themes.PatientGreen
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.relaxmind.app.R
+import com.relaxmind.app.Screen
 import com.relaxmind.app.ui.components.AppRole
-import com.relaxmind.app.ui.components.ButtonVariant
 import com.relaxmind.app.ui.components.LoadingIndicator
 import com.relaxmind.app.ui.components.RelaxBottomNav
-import com.relaxmind.app.ui.components.RelaxButton
-import com.relaxmind.app.ui.components.RelaxCard
 import com.relaxmind.app.ui.components.RelaxIcons
-import com.relaxmind.app.utils.WellnessScoreCalculator
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Edit
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Locale
+import com.relaxmind.app.ui.components.auth.SoftGradientBackground
+import com.relaxmind.app.ui.themes.BorderSoft
+import com.relaxmind.app.ui.themes.LexendFontFamily
+import com.relaxmind.app.ui.themes.LexendTypography
+import com.relaxmind.app.ui.themes.PatientGreen
+import com.relaxmind.app.ui.themes.PatientGreenLight
+import com.relaxmind.app.ui.themes.SOSCoral
+import com.relaxmind.app.ui.themes.SoftCream
+import com.relaxmind.app.ui.themes.SoftLavender
+import com.relaxmind.app.ui.themes.SoftMint
+import com.relaxmind.app.ui.themes.TextPrimary
+import com.relaxmind.app.ui.themes.TextSecondary
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun DashboardPatientScreen(
@@ -82,118 +106,100 @@ fun DashboardPatientScreen(
     val nextAppointment by viewModel.nextAppointment.collectAsState()
     val caregiver by viewModel.caregiver.collectAsState()
 
-    val haptic = LocalHapticFeedback.current
-    val scope = rememberCoroutineScope()
-
     LaunchedEffect(Unit) {
         viewModel.loadDashboardData()
     }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        bottomBar = {
-            RelaxBottomNav(
-                selectedRoute = "patient/dashboard",
-                onNavigate = onNavigate,
-                role = AppRole.PATIENT
-            )
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background)
-                .padding(innerPadding)
-        ) {
-            if (isLoading && patient == null) {
-                LoadingIndicator(modifier = Modifier.align(Alignment.Center))
-            } else {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
-                ) {
-                    // Header Block
-                    HeaderBlock(
-                        patientName = patient?.name ?: "",
-                        avatarUrl = patient?.avatarUrl ?: "",
-                        onAvatarClick = onNavigateToEditProfile
-                    )
+    // Wrap the screen inside Lexend typography theme
+    MaterialTheme(
+        colorScheme = MaterialTheme.colorScheme,
+        typography = LexendTypography
+    ) {
+        Scaffold(
+            containerColor = Color.White,
+            bottomBar = {
+                RelaxBottomNav(
+                    selectedRoute = "patient/dashboard",
+                    onNavigate = onNavigate,
+                    role = AppRole.PATIENT
+                )
+            }
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+            ) {
+                // Background gradient blobs
+                SoftGradientBackground(animateBlobs = true)
 
-                    // Score Card Block
-                    ScoreCardBlock(
-                        score = todayCheckIn?.score,
-                        category = todayCheckIn?.category,
-                        onCheckInClick = onNavigateToCheckIn
-                    )
+                if (isLoading && patient == null) {
+                    LoadingIndicator(modifier = Modifier.align(Alignment.Center))
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 24.dp, vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(24.dp)
+                    ) {
+                        // 1. Dashboard Header
+                        DashboardHeader(
+                            patientName = patient?.name ?: "Carlos",
+                            avatarUrl = patient?.avatarUrl ?: "",
+                            onAvatarClick = onNavigateToEditProfile,
+                            hasNotifications = true // Visual notification bell badge as mockup
+                        )
 
-                    // Daily Goal Block
-                    DailyGoalBlock(
-                        goalCompleted = dailyGoal?.completed ?: false,
-                        exerciseTitle = dailyGoalExercise?.title,
-                        exerciseDuration = dailyGoalExercise?.durationMinutes,
-                        onMeditateClick = onNavigateToMeditate,
-                        onCheckboxChange = { completed ->
-                            viewModel.toggleDailyGoalCompletion(completed)
-                        }
-                    )
+                        // 2. Main Wellbeing Today Card
+                        WellbeingTodayCard(
+                            score = todayCheckIn?.score,
+                            category = todayCheckIn?.category,
+                            onCheckInClick = onNavigateToCheckIn,
+                            onProgressClick = { onNavigate(Screen.Progress.route) }
+                        )
 
-                    // Diary Card Shortcut
-                    DiaryBlock(
-                        onDiaryClick = { onNavigate(com.relaxmind.app.Screen.Diary.route) }
-                    )
+                        // 3. "Para ti hoy" Section
+                        ParaTiHoySection(
+                            goalCompleted = dailyGoal?.completed ?: false,
+                            exerciseTitle = dailyGoalExercise?.title,
+                            exerciseDuration = dailyGoalExercise?.durationMinutes,
+                            onMeditateClick = onNavigateToMeditate,
+                            appointmentTitle = nextAppointment?.title,
+                            appointmentTime = nextAppointment?.time,
+                            onReminderClick = { onNavigate(Screen.Schedule.route) }
+                        )
 
-                    // Next Appointment Block
-                    NextAppointmentBlock(
-                        appointmentTitle = nextAppointment?.title,
-                        appointmentTime = nextAppointment?.time
-                    )
+                        // 4. "Accesos rápidos" Section
+                        QuickAccessSection(
+                            onMeditateClick = onNavigateToMeditate,
+                            onScheduleClick = { onNavigate(Screen.Schedule.route) }
+                        )
 
-                    // Caregiver Linking Block
-                    CaregiverBlock(
-                        caregiverId = patient?.caregiverId,
-                        caregiverName = caregiver?.let { "${it.name} ${it.lastName}" },
-                        caregiverAvatar = caregiver?.avatarUrl ?: "",
-                        onLinkClick = onNavigateToLinkCaregiver
-                    )
+                        // 5. "Mi Diario" Card (Soft 3D style)
+                        DiaryCard(
+                            onDiaryClick = { onNavigate(Screen.Diary.route) }
+                        )
 
-                    Spacer(modifier = Modifier.height(100.dp)) // Extra space for FAB safety
-                }
+                        // 6. "Mi Cuidador" Card (Soft 3D style)
+                        CaregiverCard(
+                            caregiverId = patient?.caregiverId,
+                            caregiverName = caregiver?.let { "${it.name} ${it.lastName}" },
+                            caregiverAvatar = caregiver?.avatarUrl ?: "",
+                            onLinkClick = onNavigateToLinkCaregiver
+                        )
 
-                // Floating SOS button placed inside the root Box container
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(24.dp)
-                        .size(64.dp)
-                        .shadow(elevation = 8.dp, shape = CircleShape)
-                        .background(Color(0xFFE8582A), CircleShape)
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onPress = {
-                                    val job = scope.launch {
-                                        delay(2000L) // 2-second hold
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        onNavigateToSOS()
-                                    }
-                                    try {
-                                        awaitRelease()
-                                    } finally {
-                                        job.cancel()
-                                    }
-                                }
-                            )
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "SOS",
-                        color = Color.White,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+                        // Margin safe space for the floating bottom bar
+                        Spacer(modifier = Modifier.height(100.dp))
+                    }
+
+                    // 7. SOS Floating Button
+                    SOSFloatingButton(
+                        onSOSHoldTriggered = onNavigateToSOS,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(bottom = 110.dp, end = 20.dp)
                     )
                 }
             }
@@ -201,72 +207,114 @@ fun DashboardPatientScreen(
     }
 }
 
-// ---------------------------------------------------------------------------
-// Header Block Composable
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
+// 1. HEADER COMPOSABLE
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun HeaderBlock(
+private fun DashboardHeader(
     patientName: String,
     avatarUrl: String,
-    onAvatarClick: () -> Unit
+    onAvatarClick: () -> Unit,
+    hasNotifications: Boolean
 ) {
-    val todayFormatted = remember {
-        val date = LocalDate.now()
-        val dayOfWeek = date.format(DateTimeFormatter.ofPattern("EEEE", Locale("es", "ES")))
-        val dayOfMonth = date.dayOfMonth
-        val month = date.format(DateTimeFormatter.ofPattern("MMMM", Locale("es", "ES")))
-        "Hoy es $dayOfWeek $dayOfMonth de $month"
-    }
-
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column {
-            Text(
-                text = "Buenos días, $patientName 👋",
-                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 20.sp),
-                fontWeight = FontWeight.SemiBold
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // User Avatar with Active green dot
+            UserAvatar(
+                avatarUrl = avatarUrl,
+                onClick = onAvatarClick
             )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = todayFormatted,
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
-            )
+
+            Column {
+                Text(
+                    text = "Hola, $patientName",
+                    fontFamily = LexendFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    color = TextPrimary
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Tu espacio de bienestar de hoy",
+                        fontFamily = LexendFontFamily,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 14.sp,
+                        color = TextSecondary
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(text = "🌿", fontSize = 14.sp)
+                }
+            }
         }
 
-        PatientAvatar(
-            avatarUrl = avatarUrl,
-            onClick = onAvatarClick
+        // Notification Bell button
+        SoftNotificationButton(
+            hasNotifications = hasNotifications,
+            onClick = { /* TODO: open notifications */ }
         )
     }
 }
 
 @Composable
-private fun PatientAvatar(
+private fun UserAvatar(
     avatarUrl: String,
     onClick: () -> Unit
 ) {
     val isCustomAvatar = avatarUrl.startsWith("relaxmind://avatar/")
-    val modifier = Modifier
-        .size(48.dp)
-        .clip(CircleShape)
-        .border(2.dp, PatientGreen.copy(alpha = 0.3f), CircleShape)
-        .clickable(onClick = onClick)
-
-    if (isCustomAvatar) {
-        val colors = getAvatarColors(avatarUrl)
+    Box(
+        modifier = Modifier
+            .size(64.dp)
+            .clickable(
+                onClick = onClick,
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            )
+    ) {
+        // Rounded avatar container
         Box(
-            modifier = modifier.background(Brush.linearGradient(colors))
-        )
-    } else {
-        AsyncImage(
-            model = avatarUrl.ifBlank { "https://ui-avatars.com/api/?name=P&background=0F6E56&color=fff" },
-            contentDescription = "Perfil",
-            modifier = modifier,
-            contentScale = ContentScale.Crop
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFD4F3E5)) // default soft green circle background
+                .border(2.dp, Color.White, CircleShape),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            if (isCustomAvatar) {
+                val colors = getAvatarColors(avatarUrl)
+                Box(modifier = Modifier.fillMaxSize().background(Brush.linearGradient(colors)))
+            } else if (avatarUrl.isBlank()) {
+                Image(
+                    painter = painterResource(id = R.drawable.avatar),
+                    contentDescription = "Avatar de usuario por defecto",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit
+                )
+            } else {
+                AsyncImage(
+                    model = avatarUrl,
+                    contentDescription = "Avatar de usuario",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
+                )
+            }
+        }
+
+        // Small green active status indicator at bottom right
+        Box(
+            modifier = Modifier
+                .size(14.dp)
+                .clip(CircleShape)
+                .background(PatientGreenLight)
+                .border(2.dp, Color.White, CircleShape)
+                .align(Alignment.BottomEnd)
         )
     }
 }
@@ -289,301 +337,841 @@ private fun getAvatarColors(url: String): List<Color> {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Score Card Block Composable
-// ---------------------------------------------------------------------------
 @Composable
-private fun ScoreCardBlock(
+private fun SoftNotificationButton(
+    hasNotifications: Boolean,
+    onClick: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .size(46.dp)
+            .shadow(
+                elevation = 4.dp,
+                shape = RoundedCornerShape(16.dp),
+                ambientColor = Color(0xFF8A88A6).copy(alpha = 0.2f),
+                spotColor = Color(0xFF8A88A6).copy(alpha = 0.2f)
+            )
+            .background(Color.White, RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick)
+            .padding(10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = RelaxIcons.Notifications,
+            contentDescription = "Notificaciones",
+            tint = TextPrimary,
+            modifier = Modifier.size(24.dp)
+        )
+        if (hasNotifications) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF4338A8)) // CaregiverIndigo purple dot
+                    .align(Alignment.TopEnd)
+                    .offset(x = 1.dp, y = (-1).dp)
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 2. WELLBEING TODAY CARD
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun WellbeingTodayCard(
     score: Int?,
     category: String?,
-    onCheckInClick: () -> Unit
+    onCheckInClick: () -> Unit,
+    onProgressClick: () -> Unit
 ) {
-    val cardColor = WellnessScoreCalculator.getScoreColor(score)
-    val isLightBackground = cardColor == Color(0xFFECC94B) || cardColor == Color(0xFFCBD5E0) || cardColor == Color(0xFF68D391)
-    val contentTextColor = if (isLightBackground) Color(0xFF2D3748) else Color.White
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(220.dp)
+            .shadow(
+                elevation = 16.dp,
+                shape = RoundedCornerShape(30.dp),
+                ambientColor = PatientGreen.copy(alpha = 0.25f),
+                spotColor = PatientGreen.copy(alpha = 0.25f)
+            ),
+        shape = RoundedCornerShape(30.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Background image asset for wellbeing card
+            Image(
+                painter = painterResource(id = R.drawable.fondobienestar),
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
 
-    RelaxCard(
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Left Column: Message and Action button
+                Column(
+                    modifier = Modifier.weight(1.1f),
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Mi bienestar hoy",
+                            fontFamily = LexendFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = "✦", color = Color(0xFF68D391), fontSize = 16.sp)
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Cuidar tu mente cada día te acerca a tu mejor versión.",
+                        fontFamily = LexendFontFamily,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp,
+                        color = Color(0xFF5A5E6B)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Pill Button
+                    Row(
+                        modifier = Modifier
+                            .shadow(2.dp, RoundedCornerShape(50))
+                            .background(Color.White, RoundedCornerShape(50))
+                            .clickable {
+                                if (score != null) onProgressClick() else onCheckInClick()
+                            }
+                            .padding(horizontal = 18.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = if (score != null) "Ver progreso" else "Hacer check-in",
+                            fontFamily = LexendFontFamily,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 13.sp,
+                            color = PatientGreen
+                        )
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = null,
+                            tint = PatientGreen,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(16.dp))
+
+                // Right Column: Canvas drawn progress circle
+                CircularWellbeingProgress(
+                    score = score,
+                    category = category,
+                    modifier = Modifier.weight(0.9f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun CircularWellbeingProgress(
+    score: Int?,
+    category: String?,
+    modifier: Modifier = Modifier
+) {
+    val displayScore = score ?: 74 // Default placeholder visual if null
+    val targetProgress = displayScore / 100f
+    val animatedProgress by animateFloatAsState(
+        targetValue = targetProgress,
+        animationSpec = tween(1200, easing = FastOutSlowInEasing),
+        label = "progress-ring-anim"
+    )
+
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center
+    ) {
+        Box(
+            modifier = Modifier.size(115.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                val strokeWidth = 9.dp.toPx()
+                val diameter = size.minDimension - strokeWidth
+                val topLeft = androidx.compose.ui.geometry.Offset(
+                    (size.width - diameter) / 2,
+                    (size.height - diameter) / 2
+                )
+                val arcSize = androidx.compose.ui.geometry.Size(diameter, diameter)
+
+                // Translucent track circle background
+                drawArc(
+                    color = Color.White.copy(alpha = 0.6f),
+                    startAngle = 0f,
+                    sweepAngle = 360f,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth),
+                    topLeft = topLeft,
+                    size = arcSize
+                )
+
+                // Filled green arc
+                drawArc(
+                    color = PatientGreen,
+                    startAngle = -90f,
+                    sweepAngle = animatedProgress * 360f,
+                    useCenter = false,
+                    style = Stroke(width = strokeWidth, cap = androidx.compose.ui.graphics.StrokeCap.Round),
+                    topLeft = topLeft,
+                    size = arcSize
+                )
+            }
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = displayScore.toString(),
+                        fontFamily = LexendFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 26.sp,
+                        color = TextPrimary
+                    )
+                    Text(
+                        text = "/100",
+                        fontFamily = LexendFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 12.sp,
+                        color = TextSecondary,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = if (score != null) (category ?: "Bueno") else "Bueno",
+                    fontFamily = LexendFontFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 12.sp,
+                    color = PatientGreen
+                )
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. "PARA TI HOY" SECTION
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun ParaTiHoySection(
+    goalCompleted: Boolean,
+    exerciseTitle: String?,
+    exerciseDuration: Int?,
+    onMeditateClick: () -> Unit,
+    appointmentTitle: String?,
+    appointmentTime: String?,
+    onReminderClick: () -> Unit
+) {
+    Column(
         modifier = Modifier.fillMaxWidth(),
-        containerColor = cardColor
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Para ti hoy",
+                fontFamily = LexendFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = TextPrimary
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(text = "🌿", fontSize = 16.sp)
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Card 1: Today's Goal
+            TodayGoalCard(
+                title = exerciseTitle ?: "Respiración",
+                duration = exerciseDuration ?: 8,
+                completed = goalCompleted,
+                onStartClick = onMeditateClick,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Card 2: Next Reminder
+            NextReminderCard(
+                title = appointmentTitle,
+                time = appointmentTime,
+                onCardClick = onReminderClick,
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun TodayGoalCard(
+    title: String,
+    duration: Int,
+    completed: Boolean,
+    onStartClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .height(160.dp)
+            .shadow(
+                elevation = 6.dp,
+                shape = RoundedCornerShape(26.dp),
+                ambientColor = Color(0xFF8A88A6).copy(alpha = 0.2f),
+                spotColor = Color(0xFF8A88A6).copy(alpha = 0.2f)
+            ),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = SoftMint)
     ) {
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.Start
         ) {
-            if (score != null) {
-                // Heart Icon
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 Box(
                     modifier = Modifier
-                        .size(42.dp)
-                        .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                        .size(34.dp)
+                        .background(Color.White, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = RelaxIcons.Meditation,
                         contentDescription = null,
-                        tint = contentTextColor,
-                        modifier = Modifier.size(24.dp)
+                        tint = PatientGreen,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
-                Spacer(modifier = Modifier.height(10.dp))
                 Text(
-                    text = "Mi bienestar hoy",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = contentTextColor.copy(alpha = 0.8f)
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "$score / 100",
-                    style = MaterialTheme.typography.displayMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = contentTextColor
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = category ?: "",
-                    style = MaterialTheme.typography.titleLarge,
+                    text = "Meta de hoy",
+                    fontFamily = LexendFontFamily,
                     fontWeight = FontWeight.SemiBold,
-                    color = contentTextColor
-                )
-            } else {
-                Text(
-                    text = "Aún no has registrado tu check-in de hoy",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = contentTextColor,
-                    textAlign = TextAlign.Center
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                RelaxButton(
-                    text = "Hacer check-in",
-                    onClick = onCheckInClick,
-                    variant = ButtonVariant.PRIMARY,
-                    role = AppRole.PATIENT,
-                    modifier = Modifier.width(200.dp)
+                    fontSize = 12.sp,
+                    color = PatientGreen
                 )
             }
-        }
-    }
-}
 
-// ---------------------------------------------------------------------------
-// Daily Goal Block Composable
-// ---------------------------------------------------------------------------
-@Composable
-private fun DailyGoalBlock(
-    goalCompleted: Boolean,
-    exerciseTitle: String?,
-    exerciseDuration: Int?,
-    onMeditateClick: () -> Unit,
-    onCheckboxChange: (Boolean) -> Unit
-) {
-    RelaxCard(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "🎯 Meta de Hoy",
-            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 16.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = PatientGreen
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (exerciseTitle != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                val durationText = if (exerciseDuration != null) " • $exerciseDuration min" else ""
+            Column {
                 Text(
-                    text = "$exerciseTitle$durationText",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.weight(1f)
+                    text = title,
+                    fontFamily = LexendFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = TextPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "4-7-8 · $duration min",
+                    fontFamily = LexendFontFamily,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 12.sp,
+                    color = TextSecondary
+                )
+            }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RelaxButton(
-                        text = "Ir a meditar",
-                        onClick = onMeditateClick,
-                        variant = ButtonVariant.OUTLINE,
-                        role = AppRole.PATIENT,
-                        modifier = Modifier.padding(end = 8.dp)
+            // Action Pill
+            Row(
+                modifier = Modifier
+                    .shadow(1.dp, RoundedCornerShape(50))
+                    .background(
+                        if (completed) Color.LightGray.copy(alpha = 0.5f) else PatientGreen,
+                        RoundedCornerShape(50)
                     )
-                    Checkbox(
-                        checked = goalCompleted,
-                        onCheckedChange = { onCheckboxChange(it) },
-                        enabled = !goalCompleted,
-                        colors = CheckboxDefaults.colors(
-                            checkedColor = PatientGreen,
-                            uncheckedColor = Color.Gray
-                        )
+                    .clickable(enabled = !completed, onClick = onStartClick)
+                    .padding(horizontal = 14.dp, vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Text(
+                    text = if (completed) "Completada ✓" else "Comenzar",
+                    fontFamily = LexendFontFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 11.sp,
+                    color = if (completed) TextSecondary else Color.White
+                )
+                if (!completed) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(12.dp)
                     )
                 }
             }
-        } else {
-            Text(
-                text = "Se está generando tu meta...",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
-            )
         }
     }
 }
 
-// ---------------------------------------------------------------------------
-// Next Appointment Block Composable
-// ---------------------------------------------------------------------------
 @Composable
-private fun NextAppointmentBlock(
-    appointmentTitle: String?,
-    appointmentTime: String?
+private fun NextReminderCard(
+    title: String?,
+    time: String?,
+    onCardClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    RelaxCard(modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = "📅 Próximo Recordatorio",
-            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 16.sp),
-            fontWeight = FontWeight.SemiBold,
-            color = PatientGreen
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-
-        if (appointmentTitle != null && appointmentTime != null) {
+    Card(
+        modifier = modifier
+            .height(160.dp)
+            .shadow(
+                elevation = 6.dp,
+                shape = RoundedCornerShape(26.dp),
+                ambientColor = Color(0xFF8A88A6).copy(alpha = 0.2f),
+                spotColor = Color(0xFF8A88A6).copy(alpha = 0.2f)
+            )
+            .clickable(onClick = onCardClick),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = SoftCream)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.Start
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
-                        .background(PatientGreen.copy(alpha = 0.08f), CircleShape),
+                        .size(34.dp)
+                        .background(Color.White, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         imageVector = RelaxIcons.Calendar,
                         contentDescription = null,
-                        tint = PatientGreen,
-                        modifier = Modifier.size(20.dp)
+                        tint = SOSCoral,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(14.dp))
                 Text(
-                    text = "$appointmentTitle — $appointmentTime",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Medium
+                    text = "Próximo recordatorio",
+                    fontFamily = LexendFontFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 11.sp,
+                    color = SOSCoral,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-        } else {
+
+            if (title != null && time != null) {
+                Column {
+                    Text(
+                        text = title,
+                        fontFamily = LexendFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = TextPrimary,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            imageVector = RelaxIcons.Calendar,
+                            contentDescription = null,
+                            tint = TextSecondary,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Text(
+                            text = time,
+                            fontFamily = LexendFontFamily,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 12.sp,
+                            color = TextSecondary
+                        )
+                    }
+                }
+            } else {
+                Column {
+                    Text(
+                        text = "Agenda libre",
+                        fontFamily = LexendFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 14.sp,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Todo al día hoy",
+                        fontFamily = LexendFontFamily,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 12.sp,
+                        color = TextSecondary
+                    )
+                }
+            }
+
+            // Just a placeholder row to align height structure
+            Spacer(modifier = Modifier.height(10.dp))
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 4. "ACCESOS RÁPIDOS" SECTION
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun QuickAccessSection(
+    onMeditateClick: () -> Unit,
+    onScheduleClick: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(
-                text = "No tienes recordatorios pendientes",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray
+                text = "Accesos rápidos",
+                fontFamily = LexendFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = TextPrimary
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(text = "✦", color = Color(0xFF4338A8), fontSize = 16.sp)
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Meditar Quick Access
+            QuickAccessCard(
+                title = "Meditar",
+                description = "Encuentra calma en minutos",
+                icon = RelaxIcons.Meditation,
+                backgroundColor = SoftMint,
+                iconColor = PatientGreen,
+                onClick = onMeditateClick,
+                modifier = Modifier.weight(1f)
+            )
+
+            // Agenda Quick Access
+            QuickAccessCard(
+                title = "Agenda",
+                description = "Tus citas y recordatorios en un lugar",
+                icon = RelaxIcons.Calendar,
+                backgroundColor = SoftLavender,
+                iconColor = Color(0xFF4338A8),
+                onClick = onScheduleClick,
+                modifier = Modifier.weight(1f)
             )
         }
     }
 }
 
-// ---------------------------------------------------------------------------
-// Caregiver Linking Block Composable
-// ---------------------------------------------------------------------------
 @Composable
-private fun CaregiverBlock(
+private fun QuickAccessCard(
+    title: String,
+    description: String,
+    icon: ImageVector,
+    backgroundColor: Color,
+    iconColor: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .height(140.dp)
+            .shadow(
+                elevation = 6.dp,
+                shape = RoundedCornerShape(26.dp),
+                ambientColor = Color(0xFF8A88A6).copy(alpha = 0.2f),
+                spotColor = Color(0xFF8A88A6).copy(alpha = 0.2f)
+            )
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = backgroundColor)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.Start
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(42.dp)
+                    .background(Color.White.copy(alpha = 0.65f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconColor,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            Text(
+                text = title,
+                fontFamily = LexendFontFamily,
+                fontWeight = FontWeight.Bold,
+                fontSize = 15.sp,
+                color = TextPrimary
+            )
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(
+                text = description,
+                fontFamily = LexendFontFamily,
+                fontWeight = FontWeight.Normal,
+                fontSize = 11.sp,
+                lineHeight = 13.sp,
+                color = TextSecondary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 5. "MI DIARIO" CARD
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun DiaryCard(
+    onDiaryClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 6.dp,
+                shape = RoundedCornerShape(26.dp),
+                ambientColor = Color(0xFF8A88A6).copy(alpha = 0.2f),
+                spotColor = Color(0xFF8A88A6).copy(alpha = 0.2f)
+            )
+            .clickable(onClick = onDiaryClick),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(42.dp)
+                        .background(SoftMint, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = null,
+                        tint = PatientGreen,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                Column {
+                    Text(
+                        text = "Mi Diario",
+                        fontFamily = LexendFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = "Escribe tus emociones y pensamientos de hoy",
+                        fontFamily = LexendFontFamily,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 12.sp,
+                        color = TextSecondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = TextSecondary,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 6. CAREGIVER LINKING CARD
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+private fun CaregiverCard(
     caregiverId: String?,
     caregiverName: String?,
     caregiverAvatar: String,
     onLinkClick: () -> Unit
 ) {
-    RelaxCard(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(
+                elevation = 6.dp,
+                shape = RoundedCornerShape(26.dp),
+                ambientColor = Color(0xFF8A88A6).copy(alpha = 0.2f),
+                spotColor = Color(0xFF8A88A6).copy(alpha = 0.2f)
+            ),
+        shape = RoundedCornerShape(26.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.White)
+    ) {
         if (caregiverId == null) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
-                            .background(PatientGreen.copy(alpha = 0.08f), CircleShape),
+                            .size(42.dp)
+                            .background(Color(0xFFF1EDFF), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = RelaxIcons.Person,
                             contentDescription = null,
-                            tint = PatientGreen,
+                            tint = Color(0xFF4338A8),
                             modifier = Modifier.size(20.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.width(14.dp))
                     Column {
                         Text(
                             text = "Mi Cuidador",
-                            style = MaterialTheme.typography.headlineSmall.copy(fontSize = 16.sp),
-                            fontWeight = FontWeight.SemiBold,
-                            color = PatientGreen
+                            fontFamily = LexendFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = TextPrimary
                         )
+                        Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "¿Tienes un cuidador?",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
+                            text = "¿Tienes un cuidador vinculado?",
+                            fontFamily = LexendFontFamily,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 12.sp,
+                            color = TextSecondary
                         )
                     }
                 }
-                RelaxButton(
-                    text = "Vincular",
-                    onClick = onLinkClick,
-                    variant = ButtonVariant.PRIMARY,
-                    role = AppRole.PATIENT
-                )
+
+                Row(
+                    modifier = Modifier
+                        .shadow(1.dp, RoundedCornerShape(50))
+                        .background(Color(0xFF4338A8), RoundedCornerShape(50))
+                        .clickable(onClick = onLinkClick)
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "Vincular",
+                        fontFamily = LexendFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 12.sp,
+                        color = Color.White
+                    )
+                }
             }
         } else {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(18.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
                     AsyncImage(
                         model = caregiverAvatar.ifBlank { "https://ui-avatars.com/api/?name=Caregiver&background=4338A8&color=fff" },
-                        contentDescription = "Caregiver",
+                        contentDescription = "Caregiver Avatar",
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(44.dp)
                             .clip(CircleShape)
                             .border(1.5.dp, Color(0xFF4338A8).copy(alpha = 0.3f), CircleShape),
                         contentScale = ContentScale.Crop
                     )
-                    Spacer(modifier = Modifier.width(14.dp))
                     Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = RelaxIcons.Person,
-                                contentDescription = null,
-                                tint = PatientGreen,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = "Mi Cuidador",
-                                style = MaterialTheme.typography.headlineSmall.copy(fontSize = 14.sp),
-                                fontWeight = FontWeight.SemiBold,
-                                color = PatientGreen
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "${caregiverName ?: "Cuidador"} • Vinculado ✓",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = Color.Gray
+                            text = "Mi Cuidador",
+                            fontFamily = LexendFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = caregiverName ?: "Cuidador",
+                            fontFamily = LexendFontFamily,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 12.sp,
+                            color = TextSecondary
                         )
                     }
                 }
-                
-                // Vinculado Badge
+
+                // Checked Badge
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(PatientGreen.copy(alpha = 0.12f))
+                        .background(PatientGreen.copy(alpha = 0.1f))
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
                     Row(
@@ -596,10 +1184,11 @@ private fun CaregiverBlock(
                                 .background(PatientGreen, CircleShape)
                         )
                         Text(
-                            text = "Vinculado ✓",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = PatientGreen,
-                            fontWeight = FontWeight.Bold
+                            text = "Vinculado",
+                            fontFamily = LexendFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = PatientGreen
                         )
                     }
                 }
@@ -608,57 +1197,98 @@ private fun CaregiverBlock(
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 7. SOS FLOATING BUTTON
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-private fun DiaryBlock(
-    onDiaryClick: () -> Unit
+private fun SOSFloatingButton(
+    onSOSHoldTriggered: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
-    RelaxCard(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    val haptic = LocalHapticFeedback.current
+    val scope = rememberCoroutineScope()
+
+    // Infinite pulse animations
+    val infiniteTransition = rememberInfiniteTransition(label = "sos-infinite-pulse")
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1.0f,
+        targetValue = 1.35f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "sos-scale-anim"
+    )
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.5f,
+        targetValue = 0.0f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1600, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "sos-alpha-anim"
+    )
+
+    Box(
+        modifier = modifier,
+        contentAlignment = Alignment.Center
+    ) {
+        // Outer pulsing ring
+        Box(
+            modifier = Modifier
+                .size(76.dp)
+                .scale(pulseScale)
+                .background(SOSCoral.copy(alpha = pulseAlpha), CircleShape)
+        )
+
+        // Main Coral Button
+        Box(
+            modifier = Modifier
+                .size(76.dp)
+                .shadow(
+                    elevation = 10.dp,
+                    shape = CircleShape,
+                    ambientColor = SOSCoral.copy(alpha = 0.5f),
+                    spotColor = SOSCoral.copy(alpha = 0.5f)
+                )
+                .background(SOSCoral, CircleShape)
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onPress = {
+                            val holdJob = scope.launch {
+                                delay(2000L) // Safe hold of 2 seconds
+                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onSOSHoldTriggered()
+                            }
+                            try {
+                                awaitRelease()
+                            } finally {
+                                holdJob.cancel()
+                            }
+                        }
+                    )
+                },
+            contentAlignment = Alignment.Center
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(PatientGreen.copy(alpha = 0.08f), CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Edit,
-                        contentDescription = null,
-                        tint = PatientGreen,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(14.dp))
-                Column {
-                    Text(
-                        text = "Mi Diario",
-                        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 16.sp),
-                        fontWeight = FontWeight.Bold,
-                        color = PatientGreen
-                    )
-                    Text(
-                        text = "Escribe tus emociones y pensamientos de hoy",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.Gray,
-                        maxLines = 1,
-                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
-                    )
-                }
+                Icon(
+                    imageVector = RelaxIcons.Meditation, // heart-styled icon placeholder in code
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "SOS",
+                    fontFamily = LexendFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp,
+                    color = Color.White
+                )
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            RelaxButton(
-                text = "Ver diario",
-                onClick = onDiaryClick,
-                variant = ButtonVariant.PRIMARY,
-                role = AppRole.PATIENT
-            )
         }
     }
 }
