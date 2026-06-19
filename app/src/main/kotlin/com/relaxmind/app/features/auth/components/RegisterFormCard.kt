@@ -393,10 +393,12 @@ private fun RoleCard(
         label = "role-bg-$label"
     )
 
+    val unselectedIconBgColor = if (label == "Cuidador") SoftLavender else SoftMint
+
     Card(
         modifier = modifier
             .scale(scale)
-            .height(130.dp)
+            .height(150.dp)
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         border = BorderStroke(
@@ -420,7 +422,7 @@ private fun RoleCard(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) Color.White else SoftMint),
+                        .background(if (isSelected) Color.White else unselectedIconBgColor),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -435,7 +437,8 @@ private fun RoleCard(
                     text = label,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontFamily = LexendFontFamily,
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
                     ),
                     color = TextPrimary
                 )
@@ -444,10 +447,11 @@ private fun RoleCard(
                     text = sublabel,
                     style = MaterialTheme.typography.bodySmall.copy(
                         fontFamily = LexendFontFamily,
-                        lineHeight = 14.sp
+                        fontSize = 11.sp,
+                        lineHeight = 13.sp
                     ),
                     color = TextSecondary,
-                    maxLines = 2
+                    maxLines = 3
                 )
             }
 
