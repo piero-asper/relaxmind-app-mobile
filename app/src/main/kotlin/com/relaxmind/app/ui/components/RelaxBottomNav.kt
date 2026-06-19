@@ -89,7 +89,8 @@ fun RelaxBottomNav(
             .navigationBarsPadding()
             .padding(start = 20.dp, top = 26.dp, end = 20.dp, bottom = 10.dp) // padding top buffer prevents elevated items from being clipped
     ) {
-        Row(
+        // 1. Background capsule with shadow and border (drawn behind/before Row content)
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(82.dp)
@@ -106,6 +107,13 @@ fun RelaxBottomNav(
                         Modifier.border(1.dp, Color(0xFFE2F3EB), navShape)
                     } else Modifier
                 )
+        )
+
+        // 2. Interactive Row (drawn on top of the background Box and its border)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(82.dp)
                 .padding(horizontal = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceAround
