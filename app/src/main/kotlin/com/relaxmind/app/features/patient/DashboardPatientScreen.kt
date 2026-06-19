@@ -58,6 +58,8 @@ import com.relaxmind.app.ui.components.RelaxButton
 import com.relaxmind.app.ui.components.RelaxCard
 import com.relaxmind.app.ui.components.RelaxIcons
 import com.relaxmind.app.utils.WellnessScoreCalculator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -625,7 +627,7 @@ private fun DiaryBlock(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Default.Book,
+                        imageVector = Icons.Default.Edit,
                         contentDescription = null,
                         tint = PatientGreen,
                         modifier = Modifier.size(20.dp)
