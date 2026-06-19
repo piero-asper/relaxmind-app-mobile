@@ -25,6 +25,12 @@ service cloud.firestore {
         && request.resource.data.createdAt is string;
     }
 
+    function isPatientCaregiver(patientId) {
+      return signedIn() && 
+        exists(/databases/$(database)/documents/patients/$(patientId)) &&
+        get(/databases/$(database)/documents/patients/$(patientId)).data.caregiverId == request.auth.uid;
+    }
+
     match /patients/{patientId} {
       allow create: if validBaseProfile(patientId, 'patient');
       allow read: if isSelf(patientId)
@@ -38,6 +44,36 @@ service cloud.firestore {
       allow read: if isSelf(caregiverId);
       allow update: if isSelf(caregiverId) && unchangedProtectedFields();
       allow delete: if false;
+    }
+
+    match /checkIns/{checkInId} {
+      allow create, update: if signedIn() && request.resource.data.patientId == request.auth.uid;
+      allow read: if signedIn() && (resource.data.patientId == request.auth.uid || isPatientCaregiver(resource.data.patientId));
+    }
+
+    match /streaks/{patientId} {
+      allow read: if isSelf(patientId) || isPatientCaregiver(patientId);
+      allow write: if isSelf(patientId);
+    }
+
+    match /achievements/{achievementId} {
+      allow create, update: if signedIn() && request.resource.data.patientId == request.auth.uid;
+      allow read: if signedIn() && (resource.data.patientId == request.auth.uid || isPatientCaregiver(resource.data.patientId));
+    }
+
+    match /appointments/{appointmentId} {
+      allow create, update: if signedIn() && (request.resource.data.patientId == request.auth.uid || request.resource.data.caregiverId == request.auth.uid);
+      allow read: if signedIn() && (resource.data.patientId == request.auth.uid || resource.data.caregiverId == request.auth.uid);
+    }
+
+    match /dailyGoals/{goalId} {
+      allow create, update: if signedIn() && (request.resource.data.patientId == request.auth.uid || isPatientCaregiver(request.resource.data.patientId));
+      allow read: if signedIn() && (resource.data.patientId == request.auth.uid || isPatientCaregiver(resource.data.patientId));
+    }
+
+    match /meditationExercises/{exerciseId} {
+      allow read: if signedIn();
+      allow write: if false;
     }
 
     match /{document=**} {

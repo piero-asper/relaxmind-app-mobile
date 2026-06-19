@@ -39,4 +39,11 @@ class FirebaseAuthService {
     fun getCurrentUser(): FirebaseUser? = auth.currentUser
 
     fun isLoggedIn(): Boolean = auth.currentUser != null
+
+    suspend fun reauthenticate(password: String): Result<Unit> = runCatching {
+        val user = auth.currentUser ?: error("No authenticated user is available.")
+        val email = user.email ?: error("User email not available.")
+        val credential = com.google.firebase.auth.EmailAuthProvider.getCredential(email, password)
+        user.reauthenticate(credential).await()
+    }
 }

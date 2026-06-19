@@ -3,12 +3,30 @@ package com.relaxmind.app
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
+import com.relaxmind.app.data.remote.FirebaseAuthService
+import com.relaxmind.app.data.remote.FirestoreRepository
 import com.relaxmind.app.ui.themes.RelaxMindTheme
+import com.relaxmind.app.ui.themes.ThemeState
 import com.relaxmind.app.utils.OnboardingPreferences
 
 class MainActivity : ComponentActivity() {
+    private val authService = FirebaseAuthService()
+    private val firestoreRepository = FirestoreRepository()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -16,19 +34,75 @@ class MainActivity : ComponentActivity() {
         val onboardingSeen = OnboardingPreferences.isSeen(this)
 
         setContent {
-            RelaxMindTheme {
+            val darkMode by ThemeState.darkMode.collectAsState()
+
+            RelaxMindTheme(darkTheme = darkMode) {
                 Surface {
-                    val navController = rememberNavController()
-                    AppNavGraph(
-                        navController = navController,
-                        startDestination = resolveStartDestination(
-                            isAuthenticated = false,
-                            role = null,
-                            onboardingSeen = onboardingSeen
+                    val currentUser = authService.getCurrentUser()
+                    var isCheckingSession by remember { mutableStateOf(currentUser != null) }
+                    var isAuthenticated by remember { mutableStateOf(currentUser != null) }
+                    var userRole by remember { mutableStateOf<String?>(null) }
+                    var isNewPatient by remember { mutableStateOf(false) }
+
+                    LaunchedEffect(Unit) {
+                        if (currentUser != null) {
+                            val patientResult = firestoreRepository.getPatientById(currentUser.uid)
+                            val patient = patientResult.getOrNull()
+                            if (patient != null) {
+                                ThemeState.darkMode.value = patient.darkMode
+                                ThemeState.language.value = patient.language
+                                updateAppLocale(patient.language)
+                                userRole = "patient"
+                                isNewPatient = !patient.onboardingCompleted
+                            } else {
+                                val caregiverResult = firestoreRepository.getCaregiverById(currentUser.uid)
+                                val caregiver = caregiverResult.getOrNull()
+                                if (caregiver != null) {
+                                    ThemeState.darkMode.value = caregiver.darkMode
+                                    ThemeState.language.value = caregiver.language
+                                    updateAppLocale(caregiver.language)
+                                    userRole = "caregiver"
+                                } else {
+                                    authService.logout()
+                                    isAuthenticated = false
+                                }
+                            }
+                            isCheckingSession = false
+                        }
+                    }
+
+                    if (isCheckingSession) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    } else {
+                        val navController = rememberNavController()
+                        AppNavGraph(
+                            navController = navController,
+                            startDestination = resolveStartDestination(
+                                isAuthenticated = isAuthenticated,
+                                role = userRole,
+                                isNewPatient = isNewPatient,
+                                onboardingSeen = onboardingSeen
+                            )
                         )
-                    )
+                    }
                 }
             }
         }
+    }
+
+    private fun updateAppLocale(lang: String) {
+        val locale = java.util.Locale(lang)
+        java.util.Locale.setDefault(locale)
+        val resources = this.resources
+        val configuration = resources.configuration
+        configuration.setLocale(locale)
+        resources.updateConfiguration(configuration, resources.displayMetrics)
     }
 }

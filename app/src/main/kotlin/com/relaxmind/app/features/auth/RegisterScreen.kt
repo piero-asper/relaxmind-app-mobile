@@ -58,7 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.relaxmind.app.ui.components.AppRole
 import com.relaxmind.app.ui.components.ButtonVariant
-import com.relaxmind.app.ui.components.LoadingIndicator
+import com.relaxmind.app.ui.components.FullScreenLoadingOverlay
 import com.relaxmind.app.ui.components.RelaxIcons
 import com.relaxmind.app.ui.components.RelaxButton
 import com.relaxmind.app.ui.components.RelaxInputField
@@ -386,16 +386,7 @@ fun RegisterScreen(
             }
 
             // ── Loading overlay ──────────────────────────────────────────
-            if (uiState.isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.25f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LoadingIndicator()
-                }
-            }
+            if (uiState.isLoading) FullScreenLoadingOverlay()
         }
     }
 }

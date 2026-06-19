@@ -60,7 +60,7 @@ private val patientNavItems = listOf(
     RelaxNavItem("patient/meditate", "Meditar", RelaxIcons.Meditation),
     RelaxNavItem("patient/progress", "Progreso", RelaxIcons.Progress),
     RelaxNavItem("patient/schedule", "Agenda", RelaxIcons.Calendar),
-    RelaxNavItem("patient/lumi", "Lumi", RelaxIcons.Chat)
+    RelaxNavItem("patient/settings", "Ajustes", RelaxIcons.Settings)
 )
 
 private val caregiverNavItems = listOf(

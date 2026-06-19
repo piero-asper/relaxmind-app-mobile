@@ -1,8 +1,14 @@
 package com.relaxmind.app.data.remote
 
 import com.google.firebase.firestore.FirebaseFirestore
+import com.relaxmind.app.data.model.Appointment
 import com.relaxmind.app.data.model.Caregiver
+import com.relaxmind.app.data.model.CheckIn
+import com.relaxmind.app.data.model.DailyGoal
+import com.relaxmind.app.data.model.MeditationExercise
 import com.relaxmind.app.data.model.Patient
+import com.relaxmind.app.data.model.Streak
+import com.relaxmind.app.data.model.UserAchievement
 import kotlinx.coroutines.tasks.await
 
 class FirestoreRepository(
@@ -31,14 +37,14 @@ class FirestoreRepository(
 
     suspend fun updatePatient(
         id: String,
-        fields: Map<String, Any>
+        fields: Map<String, Any?>
     ): Result<Unit> = runCatching {
         patients.document(id).update(fields).await()
     }
 
     suspend fun updateCaregiver(
         id: String,
-        fields: Map<String, Any>
+        fields: Map<String, Any?>
     ): Result<Unit> = runCatching {
         caregivers.document(id).update(fields).await()
     }
@@ -57,8 +63,104 @@ class FirestoreRepository(
         error("No user role found for id: $id")
     }
 
+    suspend fun createCheckIn(checkIn: CheckIn): Result<Unit> = runCatching {
+        firestore.collection(CHECKINS_COLLECTION)
+            .document(checkIn.id.ifBlank { firestore.collection(CHECKINS_COLLECTION).document().id })
+            .set(checkIn)
+            .await()
+    }
+
+    suspend fun getTodayCheckIn(patientId: String, date: String): Result<CheckIn?> = runCatching {
+        firestore.collection(CHECKINS_COLLECTION)
+            .whereEqualTo("patientId", patientId)
+            .whereEqualTo("date", date)
+            .limit(1)
+            .get()
+            .await()
+            .documents
+            .firstOrNull()
+            ?.toObject(CheckIn::class.java)
+    }
+
+    suspend fun getDailyGoal(patientId: String, date: String): Result<DailyGoal?> = runCatching {
+        firestore.collection(DAILY_GOALS_COLLECTION)
+            .whereEqualTo("patientId", patientId)
+            .whereEqualTo("date", date)
+            .limit(1)
+            .get()
+            .await()
+            .documents
+            .firstOrNull()
+            ?.toObject(DailyGoal::class.java)
+    }
+
+    suspend fun createDailyGoal(dailyGoal: DailyGoal): Result<Unit> = runCatching {
+        firestore.collection(DAILY_GOALS_COLLECTION)
+            .document(dailyGoal.id.ifBlank { firestore.collection(DAILY_GOALS_COLLECTION).document().id })
+            .set(dailyGoal)
+            .await()
+    }
+
+    suspend fun getMeditationExercise(exerciseId: String): Result<MeditationExercise?> = runCatching {
+        firestore.collection(MEDITATION_EXERCISES_COLLECTION)
+            .document(exerciseId)
+            .get()
+            .await()
+            .toObject(MeditationExercise::class.java)
+    }
+
+    suspend fun getAppointments(patientId: String, date: String): Result<List<Appointment>> = runCatching {
+        firestore.collection(APPOINTMENTS_COLLECTION)
+            .whereEqualTo("patientId", patientId)
+            .whereEqualTo("date", date)
+            .get()
+            .await()
+            .toObjectList(Appointment::class.java)
+    }
+
+    suspend fun updateDailyGoalCompletion(goalId: String, completed: Boolean): Result<Unit> = runCatching {
+        firestore.collection(DAILY_GOALS_COLLECTION)
+            .document(goalId)
+            .update("completed", completed)
+            .await()
+    }
+
+    suspend fun getPatientStreak(patientId: String): Result<Streak?> = runCatching {
+        firestore.collection(STREAKS_COLLECTION)
+            .document(patientId)
+            .get()
+            .await()
+            .toObject(Streak::class.java)?.copy(patientId = patientId)
+    }
+
+    suspend fun getPatientAchievements(patientId: String): Result<List<UserAchievement>> = runCatching {
+        firestore.collection(ACHIEVEMENTS_COLLECTION)
+            .whereEqualTo("patientId", patientId)
+            .get()
+            .await()
+            .toObjectList(UserAchievement::class.java)
+    }
+
+    suspend fun getPatientCheckIns(patientId: String): Result<List<CheckIn>> = runCatching {
+        firestore.collection(CHECKINS_COLLECTION)
+            .whereEqualTo("patientId", patientId)
+            .get()
+            .await()
+            .toObjectList(CheckIn::class.java)
+    }
+
+    private fun <T> com.google.firebase.firestore.QuerySnapshot.toObjectList(clazz: Class<T>): List<T> {
+        return documents.mapNotNull { it.toObject(clazz) }
+    }
+
     private companion object {
         const val PATIENTS_COLLECTION = "patients"
         const val CAREGIVERS_COLLECTION = "caregivers"
+        const val CHECKINS_COLLECTION = "checkIns"
+        const val DAILY_GOALS_COLLECTION = "dailyGoals"
+        const val MEDITATION_EXERCISES_COLLECTION = "meditationExercises"
+        const val APPOINTMENTS_COLLECTION = "appointments"
+        const val STREAKS_COLLECTION = "streaks"
+        const val ACHIEVEMENTS_COLLECTION = "achievements"
     }
 }

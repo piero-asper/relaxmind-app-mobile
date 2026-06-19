@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.relaxmind.app.ui.components.AppRole
 import com.relaxmind.app.ui.components.ButtonVariant
+import com.relaxmind.app.ui.components.FullScreenLoadingScreen
 import com.relaxmind.app.ui.components.RelaxButton
 import com.relaxmind.app.ui.components.RelaxTopBar
 import com.relaxmind.app.ui.themes.PatientGreen
@@ -106,7 +107,11 @@ fun AvatarSetupScreen(
     }
 
     if (showSavingScreen) {
-        AvatarSavingScreen()
+        FullScreenLoadingScreen(
+            text = "Guardando tu avatar...",
+            backgroundColor = Color.White,
+            indicatorColor = PatientGreen
+        )
         return
     }
 
@@ -186,28 +191,6 @@ fun AvatarSetupScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
-        }
-    }
-}
-
-@Composable
-private fun AvatarSavingScreen() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.White),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            CircularProgressIndicator(color = PatientGreen)
-            Text(
-                text = "Guardando tu avatar...",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.62f)
-            )
         }
     }
 }

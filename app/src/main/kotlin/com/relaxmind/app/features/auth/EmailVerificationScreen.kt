@@ -51,7 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.relaxmind.app.ui.components.AppRole
 import com.relaxmind.app.ui.components.ButtonVariant
-import com.relaxmind.app.ui.components.LoadingIndicator
+import com.relaxmind.app.ui.components.FullScreenLoadingOverlay
 import com.relaxmind.app.ui.components.RelaxButton
 import com.relaxmind.app.ui.components.RelaxIcons
 import com.relaxmind.app.ui.components.RelaxTopBar
@@ -188,7 +188,7 @@ fun EmailVerificationScreen(
                 Spacer(modifier = Modifier.height(24.dp))
             }
 
-            if (uiState.isLoading) LoadingIndicator()
+            if (uiState.isLoading) FullScreenLoadingOverlay()
         }
     }
 }

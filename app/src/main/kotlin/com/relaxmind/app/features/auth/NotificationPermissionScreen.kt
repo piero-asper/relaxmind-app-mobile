@@ -42,12 +42,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.relaxmind.app.ui.components.AppRole
 import com.relaxmind.app.ui.components.ButtonVariant
-import com.relaxmind.app.ui.components.LoadingIndicator
+import com.relaxmind.app.ui.components.FullScreenLoadingScreen
 import com.relaxmind.app.ui.components.RelaxButton
 import com.relaxmind.app.ui.components.RelaxIcons
 import com.relaxmind.app.ui.components.RelaxTopBar
 import com.relaxmind.app.ui.themes.PatientGreen
 import com.relaxmind.app.ui.themes.RelaxMindTheme
+import kotlinx.coroutines.delay
 
 @Composable
 fun NotificationPermissionScreen(
@@ -60,11 +61,15 @@ fun NotificationPermissionScreen(
     val userRole by viewModel.userRole.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     var submitted by remember { mutableStateOf(false) }
+    var showSavingScreen by remember { mutableStateOf(false) }
+    var savingStartedAt by remember { mutableStateOf(0L) }
 
     val notificationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
             submitted = true
+            showSavingScreen = true
+            savingStartedAt = System.currentTimeMillis()
             viewModel.setNotificationPermission(granted)
         }
     )
@@ -75,6 +80,8 @@ fun NotificationPermissionScreen(
 
     LaunchedEffect(uiState.success, submitted, userRole) {
         if (uiState.success && submitted) {
+            val elapsed = System.currentTimeMillis() - savingStartedAt
+            delay((1_000L - elapsed).coerceAtLeast(0L))
             viewModel.clearSuccess()
             if (userRole == "caregiver") onContinueCaregiver() else onContinuePatient()
         }
@@ -82,9 +89,19 @@ fun NotificationPermissionScreen(
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
+            showSavingScreen = false
             snackbarHostState.showSnackbar(it)
             viewModel.clearError()
         }
+    }
+
+    if (showSavingScreen) {
+        FullScreenLoadingScreen(
+            text = "Guardando tus preferencias...",
+            backgroundColor = Color.White,
+            indicatorColor = PatientGreen
+        )
+        return
     }
 
     Scaffold(
@@ -126,6 +143,8 @@ fun NotificationPermissionScreen(
                             notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                         } else {
                             submitted = true
+                            showSavingScreen = true
+                            savingStartedAt = System.currentTimeMillis()
                             viewModel.setNotificationPermission(true)
                         }
                     },
@@ -138,6 +157,8 @@ fun NotificationPermissionScreen(
                     enabled = !uiState.isLoading,
                     onClick = {
                         submitted = true
+                        showSavingScreen = true
+                        savingStartedAt = System.currentTimeMillis()
                         viewModel.setNotificationPermission(false)
                     }
                 ) {
@@ -149,8 +170,6 @@ fun NotificationPermissionScreen(
                 }
                 Spacer(modifier = Modifier.height(18.dp))
             }
-
-            if (uiState.isLoading) LoadingIndicator()
         }
     }
 }

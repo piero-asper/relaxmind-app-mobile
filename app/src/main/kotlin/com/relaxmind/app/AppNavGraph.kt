@@ -18,6 +18,10 @@ import com.relaxmind.app.features.auth.LoginScreen
 import com.relaxmind.app.features.auth.NotificationPermissionScreen
 import com.relaxmind.app.features.auth.RegisterScreen
 import com.relaxmind.app.features.common.WelcomeScreen
+import com.relaxmind.app.features.common.CheckInScreen
+import com.relaxmind.app.features.patient.DashboardPatientScreen
+import com.relaxmind.app.features.patient.SettingsPatientScreen
+import com.relaxmind.app.features.patient.ProgressScreen
 
 sealed class Screen(val route: String) {
     data object Welcome : Screen("welcome")
@@ -51,6 +55,7 @@ sealed class Screen(val route: String) {
     data object PatientSettings : Screen("patient/settings")
     data object EditProfile : Screen("patient/profile/edit")
     data object LinkCaregiver : Screen("patient/link-caregiver")
+    data object SOSPatient : Screen("patient/sos")
 
     data object CaregiverDashboard : Screen("caregiver/dashboard")
     data object PatientsList : Screen("caregiver/patients")
@@ -164,9 +169,44 @@ fun AppNavGraph(
         }
         composable(Screen.ForgotPassword.route) { PlaceholderScreen("Pantalla Forgot Password") }
 
-        composable(Screen.PatientDashboard.route) { PlaceholderScreen("Pantalla Patient Dashboard") }
-        composable(Screen.CheckIn.route) { PlaceholderScreen("Pantalla Check In") }
-        composable(Screen.InitialTest.route) { PlaceholderScreen("Pantalla Initial Test") }
+        composable(Screen.PatientDashboard.route) {
+            DashboardPatientScreen(
+                onNavigateToCheckIn = { navController.navigate(Screen.CheckIn.route) },
+                onNavigateToMeditate = { navController.navigate(Screen.Meditate.route) },
+                onNavigateToEditProfile = { navController.navigate(Screen.EditProfile.route) },
+                onNavigateToLinkCaregiver = { navController.navigate(Screen.LinkCaregiver.route) },
+                onNavigateToSOS = { navController.navigate(Screen.SOSPatient.route) },
+                onNavigate = { route ->
+                    navController.navigate(route) {
+                        popUpTo(Screen.PatientDashboard.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
+        composable(Screen.CheckIn.route) {
+            CheckInScreen(
+                isInitialTest = false,
+                onNavigateBack = { navController.popBackStack() },
+                onFinished = {
+                    navController.navigate(Screen.PatientDashboard.route) {
+                        popUpTo(Screen.CheckIn.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Screen.InitialTest.route) {
+            CheckInScreen(
+                isInitialTest = true,
+                onNavigateBack = { navController.popBackStack() },
+                onFinished = {
+                    navController.navigate(Screen.PatientDashboard.route) {
+                        popUpTo(Screen.InitialTest.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Screen.Meditate.route) { PlaceholderScreen("Pantalla Meditate") }
         composable(
             route = Screen.MeditationDetail.route,
@@ -175,7 +215,17 @@ fun AppNavGraph(
             val exerciseId = backStackEntry.arguments?.getString(Screen.MeditationDetail.ExerciseIdArg).orEmpty()
             PlaceholderScreen("Pantalla Meditation Detail: $exerciseId")
         }
-        composable(Screen.Progress.route) { PlaceholderScreen("Pantalla Progress") }
+        composable(Screen.Progress.route) {
+            ProgressScreen(
+                onNavigate = { route ->
+                    navController.navigate(route) {
+                        popUpTo(Screen.PatientDashboard.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
         composable(Screen.Schedule.route) { PlaceholderScreen("Pantalla Schedule") }
         composable(Screen.CreateAppointment.route) { PlaceholderScreen("Pantalla Create Appointment") }
         composable(
@@ -188,9 +238,26 @@ fun AppNavGraph(
         composable(Screen.DiaryEntry.route) { PlaceholderScreen("Pantalla Diary Entry") }
         composable(Screen.LumiChat.route) { PlaceholderScreen("Pantalla Lumi Chat") }
         composable(Screen.LumiHistory.route) { PlaceholderScreen("Pantalla Lumi History") }
-        composable(Screen.PatientSettings.route) { PlaceholderScreen("Pantalla Patient Settings") }
+        composable(Screen.PatientSettings.route) {
+            SettingsPatientScreen(
+                onNavigateToEditProfile = { navController.navigate(Screen.EditProfile.route) },
+                onLogout = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                onNavigate = { route ->
+                    navController.navigate(route) {
+                        popUpTo(Screen.PatientDashboard.route) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+            )
+        }
         composable(Screen.EditProfile.route) { PlaceholderScreen("Pantalla Edit Profile") }
         composable(Screen.LinkCaregiver.route) { PlaceholderScreen("Pantalla Link Caregiver") }
+        composable(Screen.SOSPatient.route) { PlaceholderScreen("Pantalla SOS Paciente") }
 
         composable(Screen.CaregiverDashboard.route) { PlaceholderScreen("Pantalla Caregiver Dashboard") }
         composable(Screen.PatientsList.route) { PlaceholderScreen("Pantalla Patients List") }
