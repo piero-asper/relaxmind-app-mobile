@@ -211,6 +211,17 @@ fun LumiChatScreen(
                         }
                     }
                 }
+                
+                // Error message
+                if (uiState.error != null) {
+                    item {
+                        Text(
+                            text = "Error: ${uiState.error}",
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
 
                 item { Spacer(modifier = Modifier.size(8.dp)) }
             }
